@@ -123,6 +123,17 @@ button { font-family: inherit; cursor: pointer; }
 /* Home: let the hero sit full-bleed under the transparent nav. */
 .page-shell--flush { padding-top: 0; }
 
+/* ============ loading skeletons ============ */
+.skeleton, .skel-line {
+  background: linear-gradient(90deg, #ececec 25%, #f6f6f6 37%, #ececec 63%);
+  background-size: 400% 100%;
+  animation: skel 1.4s ease infinite;
+}
+@keyframes skel { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+.shop-card__media.skeleton { display: block; }
+.skel-line { height: 12px; border-radius: 3px; margin-top: 10px; }
+.skel-line--sm { width: 40%; }
+
 /* ============ hero ============ */
 .hero { position: relative; height: 100vh; min-height: 560px; background: #111; overflow: hidden; }
 .hero__bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }

@@ -13,7 +13,8 @@
       "Bash(curl -s http://localhost:3145/)",
       "Bash(PORT=3146 npm run start)",
       "Bash(curl -s -o /dev/null http://localhost:3146/)",
-      "Bash(curl -s http://localhost:3146/)"
+      "Bash(curl -s http://localhost:3146/)",
+      "Bash(node ./_time.mjs)"
     ]
   }
 }
