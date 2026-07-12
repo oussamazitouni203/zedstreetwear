@@ -52,7 +52,7 @@ export default function BestSellers({ items = [] }) {
   };
 
   return (
-    <section id="shop" className="container" style={{ padding: '96px 0 80px' }}>
+    <section id="shop" className="container" style={{ paddingTop: '96px', paddingBottom: '80px' }}>
       <div className="section-head">
         <div>
           <p className="eyebrow">01 — Most wanted</p>
