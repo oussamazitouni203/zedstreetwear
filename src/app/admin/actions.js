@@ -1,11 +1,17 @@
 'use server';
 
+import { revalidateTag } from 'next/cache';
 import { prisma } from '../../lib/prisma.js';
 import { getCurrentSession, hashPassword } from '../../lib/auth.js';
 import { mapProduct, mapBundle, mapCategory, mapUser, dbStatus, slugify } from './_map.js';
 import { listOrders } from './queries.js';
 
 const bundleInclude = { items: { include: { product: true } } };
+
+// Bust the cached storefront (shop/home) so admin edits appear right away.
+function revalidateStore() {
+  revalidateTag('storefront');
+}
 
 async function requireAdmin() {
   const session = await getCurrentSession();
@@ -77,6 +83,7 @@ function normalizeSizes(sizes) {
 
 export async function saveProduct(input) {
   await requireAdmin();
+  revalidateStore();
 
   const categoryIds = Array.isArray(input.categoryIds) ? input.categoryIds.filter(Boolean) : [];
 
@@ -116,12 +123,14 @@ export async function saveProduct(input) {
 
 export async function deleteProduct(id) {
   await requireAdmin();
+  revalidateStore();
   await prisma.product.delete({ where: { id } });
   return { id };
 }
 
 export async function deleteProducts(ids) {
   await requireAdmin();
+  revalidateStore();
   const list = Array.isArray(ids) ? ids : [];
   await prisma.product.deleteMany({ where: { id: { in: list } } });
   return { ids: list };
@@ -206,6 +215,7 @@ export async function deleteOrdersForever(ids) {
 
 export async function toggleBundle(id) {
   await requireAdmin();
+  revalidateStore();
   const bundle = await prisma.bundle.findUnique({ where: { id } });
   if (!bundle) throw new Error('Bundle not found.');
   const updated = await prisma.bundle.update({
@@ -218,6 +228,7 @@ export async function toggleBundle(id) {
 
 export async function changeBundleDiscount(id, delta) {
   await requireAdmin();
+  revalidateStore();
   const bundle = await prisma.bundle.findUnique({ where: { id } });
   if (!bundle) throw new Error('Bundle not found.');
   const discount = Math.min(50, Math.max(0, bundle.discount + delta));
@@ -243,6 +254,7 @@ async function uniqueBundleSlug(base, ignoreId) {
 
 export async function saveBundle(input) {
   await requireAdmin();
+  revalidateStore();
 
   const name = String(input.name || '').trim();
   if (!name) throw new Error('Bundle name is required.');
@@ -271,12 +283,14 @@ export async function saveBundle(input) {
 
 export async function deleteBundle(id) {
   await requireAdmin();
+  revalidateStore();
   await prisma.bundle.delete({ where: { id } });
   return { id };
 }
 
 export async function deleteBundles(ids) {
   await requireAdmin();
+  revalidateStore();
   const list = Array.isArray(ids) ? ids : [];
   await prisma.bundle.deleteMany({ where: { id: { in: list } } });
   return { ids: list };
@@ -284,6 +298,7 @@ export async function deleteBundles(ids) {
 
 export async function setBundlesActive(ids, active) {
   await requireAdmin();
+  revalidateStore();
   const list = Array.isArray(ids) ? ids : [];
   await prisma.bundle.updateMany({ where: { id: { in: list } }, data: { active: Boolean(active) } });
   return { ids: list, active: Boolean(active) };
@@ -346,6 +361,7 @@ export async function deleteUsers(ids) {
 
 export async function saveCategory(input) {
   await requireAdmin();
+  revalidateStore();
 
   const name = String(input.name || '').trim();
   if (!name) throw new Error('Category name is required.');
@@ -384,6 +400,7 @@ export async function saveCategory(input) {
 
 export async function deleteCategory(id) {
   await requireAdmin();
+  revalidateStore();
   // Children have their parentId nulled (onDelete: SetNull); product links
   // (m2m) are removed automatically. So deletion is always safe.
   await prisma.category.delete({ where: { id } });
@@ -392,6 +409,7 @@ export async function deleteCategory(id) {
 
 export async function deleteCategories(ids) {
   await requireAdmin();
+  revalidateStore();
   const list = Array.isArray(ids) ? ids : [];
   await prisma.category.deleteMany({ where: { id: { in: list } } });
   return { ids: list };

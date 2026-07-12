@@ -22,6 +22,8 @@ h1, h2, h3, p, figure, blockquote { margin: 0; }
 button { font-family: inherit; cursor: pointer; }
 
 .container { max-width: 1440px; margin: 0 auto; padding-left: 48px; padding-right: 48px; }
+@media (max-width: 768px) { .container { padding-left: 24px; padding-right: 24px; } }
+@media (max-width: 480px) { .container { padding-left: 16px; padding-right: 16px; } }
 
 /* labels + headings */
 .eyebrow { font-size: 12px; letter-spacing: 0.3em; text-transform: uppercase; color: #999; margin-bottom: 10px; }
@@ -122,6 +124,30 @@ button { font-family: inherit; cursor: pointer; }
 .page-shell { padding-top: 72px; min-height: calc(100vh - 72px); }
 /* Home: let the hero sit full-bleed under the transparent nav. */
 .page-shell--flush { padding-top: 0; }
+
+/* ============ preloader ============ */
+.preloader {
+  position: fixed; inset: 0; z-index: 9999; background: #0c0c0b;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity 0.7s ease, visibility 0.7s ease;
+}
+.preloader--done { opacity: 0; visibility: hidden; pointer-events: none; }
+.preloader__ring {
+  position: relative; width: 120px; height: 120px;
+  display: flex; align-items: center; justify-content: center;
+}
+.preloader__ring::before {
+  content: ''; position: absolute; inset: -6px; border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.1); border-top-color: #fff;
+  animation: preSpin 1s linear infinite;
+}
+.preloader__ring::after {
+  content: ''; position: absolute; inset: -6px; border-radius: 50%;
+  border: 2px solid transparent; border-right-color: rgba(255,255,255,0.3);
+  animation: preSpin 1.8s linear infinite reverse;
+}
+.preloader__logo { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; display: block; }
+@keyframes preSpin { to { transform: rotate(360deg); } }
 
 /* ============ loading skeletons ============ */
 .skeleton, .skel-line {
@@ -525,7 +551,8 @@ a.instagram__tile:hover img { transform: scale(1.05); }
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 48px;
-  padding: 56px 0;
+  padding-top: 56px;
+  padding-bottom: 56px;
   border-bottom: 1px solid #e5e5e5;
 }
 .contact-detail__label {
@@ -577,7 +604,7 @@ a.instagram__tile:hover img { transform: scale(1.05); }
 }
 
 /* faq */
-.contact-faq-section { padding: 96px 0 120px; max-width: 720px; }
+.contact-faq-section { padding-top: 96px; padding-bottom: 120px; max-width: 720px; margin-left: auto; margin-right: auto; }
 .contact-faq-section__title { margin-top: 10px; margin-bottom: 40px; font-size: 32px; }
 .contact-faq {
   display: flex;
@@ -620,7 +647,10 @@ a.instagram__tile:hover img { transform: scale(1.05); }
 @media (max-width: 640px) {
   .contact-hero__title { font-size: 32px; }
   .contact-hero { padding: 48px 0 32px; }
-  .social-card { width: 130px; padding: 24px 16px; }
+  .social-card { width: 100%; max-width: 160px; padding: 24px 16px; }
+  .contact-socials__grid { gap: 12px; }
+  .contact-detail__value { font-size: 15px; }
+  .contact-faq-section { padding-top: 56px; padding-bottom: 72px; }
 }
 
 /* ============ search overlay ============ */

@@ -1,6 +1,7 @@
 // Server-side data access for the public storefront. Returns data already
 // shaped the way the existing storefront components expect it.
 import { prisma } from './prisma.js';
+import { unstable_cache } from 'next/cache';
 
 // Material / fit copy keyed by category slug (used on the product page).
 const MATERIAL = {
@@ -67,13 +68,19 @@ async function categoriesWithCounts() {
 
 // ---------- Shop page ----------
 
-export async function getShopData() {
-  const [products, categories] = await Promise.all([
-    prisma.product.findMany({ include: { categories: true }, orderBy: { createdAt: 'desc' } }),
-    categoriesWithCounts()
-  ]);
-  return { products: products.map(toCard), categories };
-}
+// Cached: the shop catalog changes only when admin edits products/categories,
+// which busts the 'storefront' tag. Otherwise served from cache (no DB hit).
+export const getShopData = unstable_cache(
+  async () => {
+    const [products, categories] = await Promise.all([
+      prisma.product.findMany({ include: { categories: true }, orderBy: { createdAt: 'desc' } }),
+      categoriesWithCounts()
+    ]);
+    return { products: products.map(toCard), categories };
+  },
+  ['shop-data'],
+  { revalidate: 300, tags: ['storefront'] }
+);
 
 // ---------- Product detail ----------
 
@@ -112,7 +119,8 @@ export async function getProductIds() {
 
 // ---------- Home page ----------
 
-export async function getHomeData() {
+export const getHomeData = unstable_cache(
+  async () => {
   const [bestSellersRaw, arrivalsRaw, allCategories, bundlesRaw] = await Promise.all([
     prisma.product.findMany({
       where: { tag: 'Best seller' },
@@ -165,7 +173,10 @@ export async function getHomeData() {
   const categories = allCategories.filter(c => !c.parent);
 
   return { bestSellers, arrivals, categories, bundles };
-}
+  },
+  ['home-data'],
+  { revalidate: 300, tags: ['storefront'] }
+);
 
 // ---------- Bundle detail ----------
 
