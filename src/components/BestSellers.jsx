@@ -3,15 +3,31 @@
 import { useEffect, useRef, useState } from 'react';
 import ImageBox from './ImageBox.jsx';
 
-const VISIBLE = 3;
 const AUTOPLAY_MS = 3500;
+
+function useVisible() {
+  const [visible, setVisible] = useState(3);
+  useEffect(() => {
+    const update = () => setVisible(window.innerWidth <= 640 ? 1 : window.innerWidth <= 1024 ? 2 : 3);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+  return visible;
+}
 
 export default function BestSellers({ items = [] }) {
   const bestSellers = items;
   const [slide, setSlide] = useState(0);
   const [paused, setPaused] = useState(false);
   const trackRef = useRef(null);
-  const maxSlide = Math.max(0, bestSellers.length - VISIBLE);
+  const visible = useVisible();
+  const maxSlide = Math.max(0, bestSellers.length - visible);
+
+  // Clamp slide when visible count changes (e.g. on resize)
+  useEffect(() => {
+    setSlide(s => Math.min(s, maxSlide));
+  }, [maxSlide]);
 
   useEffect(() => {
     if (paused) return;
@@ -36,7 +52,7 @@ export default function BestSellers({ items = [] }) {
   };
 
   return (
-    <section id="shop" className="container" style={{ padding: '96px 48px 80px' }}>
+    <section id="shop" className="container" style={{ padding: '96px 0 80px' }}>
       <div className="section-head">
         <div>
           <p className="eyebrow">01 — Most wanted</p>
@@ -82,3 +98,4 @@ export default function BestSellers({ items = [] }) {
     </section>
   );
 }
+
