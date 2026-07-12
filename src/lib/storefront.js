@@ -84,33 +84,40 @@ export const getShopData = unstable_cache(
 
 // ---------- Product detail ----------
 
-export async function getProduct(id) {
-  const p = await prisma.product.findUnique({ where: { id }, include: { categories: true } });
-  if (!p) return null;
-  const card = toCard(p);
-  // Principal image first, then the gallery. Deduped, empties removed.
-  const images = [...new Set([p.principalImage, ...(p.gallery || [])].filter(Boolean))];
-  return {
-    ...card,
-    images,
-    description: p.description || p.shortDescription || `A ${card.name} from the SS26 range — cut clean, built to last.`,
-    specs: specsFor(card)
-  };
-}
+export const getProduct = unstable_cache(
+  async (id) => {
+    const p = await prisma.product.findUnique({ where: { id }, include: { categories: true } });
+    if (!p) return null;
+    const card = toCard(p);
+    const images = [...new Set([p.principalImage, ...(p.gallery || [])].filter(Boolean))];
+    return {
+      ...card,
+      images,
+      description: p.description || p.shortDescription || `A ${card.name} from the SS26 range — cut clean, built to last.`,
+      specs: specsFor(card)
+    };
+  },
+  ['product'],
+  { revalidate: 300, tags: ['storefront'] }
+);
 
-export async function getRelated(product, limit = 4) {
-  const slugs = product.categorySlugs ?? [];
-  if (slugs.length === 0) return [];
-  const items = await prisma.product.findMany({
-    where: {
-      categories: { some: { slug: { in: slugs } } },
-      NOT: { id: product.id }
-    },
-    include: { categories: true },
-    take: limit
-  });
-  return items.map(toCard);
-}
+export const getRelated = unstable_cache(
+  async (product, limit = 4) => {
+    const slugs = product.categorySlugs ?? [];
+    if (slugs.length === 0) return [];
+    const items = await prisma.product.findMany({
+      where: {
+        categories: { some: { slug: { in: slugs } } },
+        NOT: { id: product.id }
+      },
+      include: { categories: true },
+      take: limit
+    });
+    return items.map(toCard);
+  },
+  ['related'],
+  { revalidate: 300, tags: ['storefront'] }
+);
 
 export async function getProductIds() {
   const rows = await prisma.product.findMany({ select: { id: true } });

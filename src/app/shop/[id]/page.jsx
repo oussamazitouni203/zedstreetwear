@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { getProduct, getRelated } from '../../../lib/storefront.js';
 import ProductDetailClient from './ProductDetailClient.jsx';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
