@@ -2,7 +2,18 @@
   "permissions": {
     "allow": [
       "Bash(grep -E '\\(^|/\\)\\\\.env$')",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(PORT=3144 npm run start)",
+      "Bash(curl -s -o /dev/null http://localhost:3144/)",
+      "Bash(curl -s http://localhost:3144/)",
+      "Bash(curl -s -o /dev/null -w \"status=%{http_code} type=%{content_type}\\\\n\" \"http://localhost:3144/image/upload/logo.jpg\")",
+      "Bash(curl -s -o /dev/null -w \"home status=%{http_code}\\\\n\" http://localhost:3144/)",
+      "Bash(PORT=3145 npm run start)",
+      "Bash(curl -s -o /dev/null http://localhost:3145/)",
+      "Bash(curl -s http://localhost:3145/)",
+      "Bash(PORT=3146 npm run start)",
+      "Bash(curl -s -o /dev/null http://localhost:3146/)",
+      "Bash(curl -s http://localhost:3146/)"
     ]
   }
 }

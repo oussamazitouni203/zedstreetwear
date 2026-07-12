@@ -90,7 +90,31 @@ button { font-family: inherit; cursor: pointer; }
 .nav__links--right { justify-content: flex-end; align-items: center; gap: 16px; }
 .nav__icon-btn { background: none; border: none; cursor: pointer; color: inherit; padding: 4px; display: flex; align-items: center; position: relative; }
 .nav__cart-count { position: absolute; top: -6px; right: -8px; background: #fff; color: #000; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; line-height: 1; border: 1px solid #000; }
-.nav__logo { font-size: 20px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; flex: 0 0 auto; }
+.nav__logo { flex: 0 0 auto; display: flex; align-items: center; }
+.nav__logo-img { height: 52px; width: 52px; object-fit: cover; border-radius: 50%; display: block; }
+.nav__burger {
+  display: none; flex: 1; align-items: center;
+  background: none; border: none; cursor: pointer; color: inherit; padding: 4px;
+}
+
+/* Mobile menu overlay */
+.mobile-menu {
+  position: fixed; inset: 0; z-index: 90; background: #fff;
+  display: flex; flex-direction: column; padding: 20px 24px 40px;
+  animation: mmFade 0.2s ease;
+}
+@keyframes mmFade { from { opacity: 0; } to { opacity: 1; } }
+.mobile-menu__top { display: flex; align-items: center; justify-content: space-between; height: 52px; }
+.mobile-menu__close { background: none; border: none; font-size: 36px; line-height: 1; cursor: pointer; color: #111; }
+.mobile-menu__links { display: flex; flex-direction: column; margin-top: 28px; }
+.mobile-menu__links a {
+  font-size: 30px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.01em; color: #111;
+  padding: 18px 0; border-bottom: 1px solid #eee;
+}
+.mobile-menu__search {
+  margin-top: auto; background: #111; color: #fff; border: none; cursor: pointer;
+  padding: 16px; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600;
+}
 
 /* Reserves space below the navbar so the footer can never ride up into view
    during a route transition (e.g. a page's content is briefly empty while
@@ -452,13 +476,14 @@ a.instagram__tile:hover img { transform: scale(1.05); }
   .reviews__grid { grid-template-columns: 1fr; gap: 32px; }
   .instagram__grid { grid-template-columns: repeat(3, 1fr); }
   .footer__grid { grid-template-columns: 1fr 1fr; }
-  .nav__links { display: none; }
+  .nav__links:not(.nav__links--right) { display: none; }
+  .nav__burger { display: flex; }
 }
 
 @media (max-width: 640px) {
-  .product-card { flex: 0 0 100%; }
-  .arrivals__grid { grid-template-columns: 1fr; }
-  .shop__grid { grid-template-columns: 1fr; }
+  .product-card { flex: 0 0 calc((100% - 24px) / 2); }
+  .arrivals__grid { grid-template-columns: repeat(2, 1fr); gap: 20px 12px; }
+  .shop__grid { grid-template-columns: repeat(2, 1fr); gap: 28px 12px; }
   .shop__toolbar { flex-direction: column; align-items: flex-start; }
   .usp__grid { grid-template-columns: 1fr; }
   .hero__ctas { flex-direction: column; }
