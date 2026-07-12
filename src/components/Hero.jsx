@@ -3,8 +3,15 @@ import Link from 'next/link';
 export default function Hero() {
   return (
     <section className="hero">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img className="hero__bg" src="/image/upload/streetwearhero.gif" alt="" aria-hidden="true" />
+      <video
+        className="hero__bg"
+        src="/image/upload/6565261-uhd_4096_2160_25fps.mp4"
+        autoPlay
+        muted
+        loop
+        playsInline
+        aria-hidden="true"
+      />
       <div className="hero__scrim" />
       <div className="hero__content">
         <p className="hero__kicker">Spring / Summer 2026</p>
