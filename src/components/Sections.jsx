@@ -36,7 +36,7 @@ export function NewArrivals({ arrivals = [] }) {
       </div>
       <div className="arrivals__grid">
         {arrivals.map(item => (
-          <div key={item.id}>
+          <Link key={item.id} href={`/shop/${item.id}`}>
             <div className="arrival-card__media">
               <ImageBox src={item.image} alt={item.name} label={`new arrival — ${item.name}`} />
             </div>
@@ -44,7 +44,7 @@ export function NewArrivals({ arrivals = [] }) {
               <p className="name">{item.name}</p>
               <p className="price">{item.price}</p>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </section>

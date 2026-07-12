@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import ImageBox from './ImageBox.jsx';
 
 const AUTOPLAY_MS = 3500;
@@ -72,14 +73,14 @@ export default function BestSellers({ items = [] }) {
         <div ref={trackRef} className="slider-track" style={{ transform: `translateX(${offset()}px)` }}>
           {bestSellers.map(p => (
             <div key={p.id} className="product-card">
-              <div className="product-card__media">
+              <Link href={`/shop/${p.id}`} className="product-card__media" style={{ display: 'block' }}>
                 <ImageBox src={p.image} alt={p.name} label={`product — ${p.name}`} />
                 <span className="product-card__tag">{p.tag}</span>
                 <div className="product-card__reveal">
                   <p className="name">{p.name}</p>
                   <p className="price">{p.price}</p>
                 </div>
-              </div>
+              </Link>
             </div>
           ))}
         </div>
