@@ -6,11 +6,9 @@ import InstagramFeed from '../components/InstagramFeed.jsx';
 import { getHomeData } from '../lib/storefront.js';
 import {
   Marquee,
-  Manifesto,
   NewArrivals,
   Bundles,
   Promo,
-  Reviews,
   UspBar
 } from '../components/Sections.jsx';
 
@@ -24,13 +22,11 @@ export default async function HomePage() {
       <Hero />
       <Marquee />
       <BestSellers items={bestSellers} />
-      <Manifesto />
       <Categories categories={categories} />
       <FeaturedDrop />
       <NewArrivals arrivals={arrivals} />
       <Bundles bundles={bundles} />
       <Promo />
-      <Reviews />
       <InstagramFeed />
       <UspBar />
     </>
