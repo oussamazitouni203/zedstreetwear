@@ -57,9 +57,9 @@ export default function Navbar() {
             <Link href="/shop">Shop</Link>
             <Link href="/contact">Contact</Link>
           </nav>
-          <Link href="/" className="nav__logo" aria-label="Zedstreetwear — home">
+          <Link href="/" className="nav__logo" aria-label="The Bespoke — home">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="nav__logo-img" src="/image/upload/logo.jpg" alt="Zedstreetwear" />
+            <img className="nav__logo-img" src="/image/upload/logo.jpg" alt="The Bespoke" />
           </Link>
           <div className="nav__links nav__links--right">
             <button className="nav__icon-btn" aria-label="Search" onClick={() => setSearchOpen(true)}>
@@ -76,7 +76,7 @@ export default function Navbar() {
       {menuOpen && (
         <div className="mobile-menu">
           <div className="mobile-menu__top">
-            <img className="nav__logo-img" src="/image/upload/logo.jpg" alt="Zedstreetwear" />
+            <img className="nav__logo-img" src="/image/upload/logo.jpg" alt="The Bespoke" />
             <button className="mobile-menu__close" aria-label="Close menu" onClick={() => setMenuOpen(false)}>×</button>
           </div>
           <nav className="mobile-menu__links">

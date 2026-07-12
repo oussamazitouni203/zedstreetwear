@@ -2,7 +2,7 @@ import ShopPageClient from './ShopPageClient.jsx';
 import { getShopData } from '../../lib/storefront.js';
 
 export const metadata = {
-  title: 'Shop — Zedstreetwear'
+  title: 'Shop — The Bespoke'
 };
 
 // Cache for 5 minutes; stale content is served instantly while revalidating.

@@ -8,7 +8,7 @@ export async function generateMetadata({ params }) {
   const { id } = await params;
   const product = await getProduct(id);
   return {
-    title: product ? `${product.name} — Zedstreetwear` : 'Not found — Zedstreetwear'
+    title: product ? `${product.name} — The Bespoke` : 'Not found — The Bespoke'
   };
 }
 

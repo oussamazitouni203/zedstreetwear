@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import ImageBox from './ImageBox.jsx';
 
-const HANDLE = 'zedstreetwear';
+const HANDLE = 'thebespoke';
 const PLACEHOLDERS = [1, 2, 3, 4, 5, 6];
 
 export default function InstagramFeed() {

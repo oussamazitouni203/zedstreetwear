@@ -49,8 +49,8 @@ export default function ContactPage() {
       <section className="container contact-details">
         <div className="contact-detail">
           <p className="contact-detail__label">Email</p>
-          <a href="mailto:hello@zedstreetwear.com" className="contact-detail__value contact-detail__link">
-            hello@zedstreetwear.com
+          <a href="mailto:hello@thebespoke.com" className="contact-detail__value contact-detail__link">
+            hello@thebespoke.com
           </a>
         </div>
         <div className="contact-detail">
@@ -66,7 +66,7 @@ export default function ContactPage() {
       <section className="contact-socials">
         <div className="container contact-socials__inner">
           <p className="eyebrow eyebrow--dark">Follow along</p>
-          <h2 className="section-title contact-socials__title">@zedstreetwear</h2>
+          <h2 className="section-title contact-socials__title">@thebespoke</h2>
           <div className="contact-socials__grid">
             {SOCIALS.map(({ name, href, icon: Icon }) => (
               <a key={name} href={href} className="social-card">

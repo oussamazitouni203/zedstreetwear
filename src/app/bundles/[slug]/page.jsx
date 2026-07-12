@@ -8,7 +8,7 @@ export async function generateMetadata({ params }) {
   const { slug } = await params;
   const bundle = await getBundle(slug);
   return {
-    title: bundle ? `${bundle.name} — Zedstreetwear` : 'Not found — Zedstreetwear'
+    title: bundle ? `${bundle.name} — The Bespoke` : 'Not found — The Bespoke'
   };
 }
 

@@ -4,7 +4,7 @@ import Preloader from '../components/Preloader.jsx';
 import '../styles.css';
 
 export const metadata = {
-  title: 'Zedstreetwear',
+  title: 'The Bespoke',
   description: 'Monochrome streetwear essentials — SS26 collection.'
 };
 

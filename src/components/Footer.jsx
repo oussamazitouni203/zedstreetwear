@@ -7,7 +7,7 @@ export default function Footer() {
     <footer className="footer">
       <div className="container footer__grid">
         <div>
-          <p className="footer__brand">Zedstreetwear</p>
+          <p className="footer__brand">The Bespoke</p>
           <p className="footer__blurb">Sign up for early access to drops, restocks and lookbooks. No noise.</p>
           <form className="footer__signup" onSubmit={e => e.preventDefault()}>
             <input type="email" placeholder="Email address" required />
@@ -36,7 +36,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="container footer__legal">
-        <span>© 2026 Zedstreetwear. All rights reserved.</span>
+        <span>© 2026 The Bespoke. All rights reserved.</span>
         <span>Privacy — Terms — <Link href="/admin">Admin</Link></span>
       </div>
     </footer>

@@ -18,7 +18,7 @@ export default function Sidebar({ view, onNavigate, pendingCount, adminName }) {
   return (
     <aside className="adm-sidebar">
       <div className="adm-sidebar__brand">
-        <p className="name">Zedstreetwear</p>
+        <p className="name">The Bespoke</p>
         <p className="sub">Admin</p>
       </div>
       <nav className="adm-sidebar__nav">

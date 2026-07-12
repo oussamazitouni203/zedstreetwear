@@ -4,7 +4,7 @@ import ImageBox from './ImageBox.jsx';
 
 export function Marquee() {
   const line =
-    'New drop live\u00A0\u00A0•\u00A0\u00A0Free shipping over $100\u00A0\u00A0•\u00A0\u00A0Limited runs — no restocks\u00A0\u00A0•\u00A0\u00A0Zedstreetwear SS26\u00A0\u00A0•\u00A0\u00A0';
+    'New drop live\u00A0\u00A0•\u00A0\u00A0Free shipping over $100\u00A0\u00A0•\u00A0\u00A0Limited runs — no restocks\u00A0\u00A0•\u00A0\u00A0The Bespoke SS26\u00A0\u00A0•\u00A0\u00A0';
   return (
     <div className="marquee">
       <div className="marquee__track">

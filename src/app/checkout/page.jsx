@@ -1,7 +1,7 @@
 import CheckoutClient from './CheckoutClient.jsx';
 
 export const metadata = {
-  title: 'Checkout — Zedstreetwear'
+  title: 'Checkout — The Bespoke'
 };
 
 export default function CheckoutPage() {
