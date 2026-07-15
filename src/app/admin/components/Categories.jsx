@@ -55,10 +55,10 @@ export default function Categories({ categories, search, onDelete, onBulkDelete 
             <div className="thumb">
               {c.image ? <img src={c.image} alt="" /> : null}
             </div>
-            <span style={{ fontWeight: 500 }}>{c.name}</span>
-            <span style={{ color: '#666' }}>{c.slug}</span>
-            <span style={{ color: c.parentName ? '#111' : '#bbb' }}>{c.parentName || '—'}</span>
-            <span className="num">{c.productCount}</span>
+            <span className="cell-primary" style={{ fontWeight: 500 }}>{c.name}</span>
+            <span data-label="Slug" style={{ color: '#666' }}>{c.slug}</span>
+            <span data-label="Parent" style={{ color: c.parentName ? '#111' : '#bbb' }}>{c.parentName || '—'}</span>
+            <span data-label="Products" className="num">{c.productCount}</span>
             <div className="row-actions">
               <Link className="adm-btn--small" href={`/admin/categories/${c.id}/edit`}>Edit</Link>
               <button className="delete-btn" onClick={() => onDelete(c.id)} aria-label={`Delete ${c.name}`}>✕</button>

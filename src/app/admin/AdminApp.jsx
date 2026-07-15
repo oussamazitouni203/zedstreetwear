@@ -11,6 +11,7 @@ import Orders from './components/Orders.jsx';
 import Bundles from './components/Bundles.jsx';
 import Users from './components/Users.jsx';
 import Categories from './components/Categories.jsx';
+import Attributes from './components/Attributes.jsx';
 import OrderModal from './components/OrderModal.jsx';
 import ConfirmDialog from './components/ConfirmDialog.jsx';
 
@@ -18,6 +19,7 @@ const TITLES = {
   dashboard: 'Dashboard',
   products: 'Products',
   categories: 'Categories',
+  attributes: 'Attributes',
   orders: 'Orders',
   bundles: 'Bundles & discounts',
   users: 'Users'
@@ -31,7 +33,9 @@ const NOTICES = {
   'bundle-added': 'Bundle has been added.',
   'bundle-updated': 'Bundle has been updated.',
   'user-added': 'User has been added.',
-  'user-updated': 'User has been updated.'
+  'user-updated': 'User has been updated.',
+  'attribute-added': 'Attribute has been added.',
+  'attribute-updated': 'Attribute has been updated.'
 };
 
 export default function AdminApp({ initial, adminName, adminId, initialView = 'dashboard', notice = null }) {
@@ -61,6 +65,7 @@ export default function AdminApp({ initial, adminName, adminId, initialView = 'd
   const [bundles, setBundles] = useState(initial.bundles);
   const [users, setUsers] = useState(initial.users);
   const [categories, setCategories] = useState(initial.categories);
+  const [attributes, setAttributes] = useState(initial.attributes);
 
   const [busy, setBusy] = useState(false);
   const [activeOrderId, setActiveOrderId] = useState(null);
@@ -142,6 +147,13 @@ export default function AdminApp({ initial, adminName, adminId, initialView = 'd
       showToast('User deleted.');
     });
 
+  const deleteAttribute = id =>
+    withBusy(async () => {
+      await actions.deleteAttribute(id);
+      setAttributes(as => as.filter(a => a.id !== id));
+      showToast('Attribute deleted.');
+    });
+
   // Deletes are routed through a confirmation dialog before running.
   const askDeleteProduct = id => {
     const p = products.find(x => x.id === id);
@@ -190,6 +202,16 @@ export default function AdminApp({ initial, adminName, adminId, initialView = 'd
       message: `Delete admin account “${u?.name ?? ''}” (${u?.email ?? ''})? They will lose access immediately.`,
       confirmLabel: 'Delete',
       run: () => deleteUser(id)
+    });
+  };
+
+  const askDeleteAttribute = id => {
+    const a = attributes.find(x => x.id === id);
+    setConfirming({
+      title: 'Delete attribute',
+      message: `Delete the “${a?.name ?? ''}” attribute? Existing products keep their saved variations.`,
+      confirmLabel: 'Delete',
+      run: () => deleteAttribute(id)
     });
   };
 
@@ -251,6 +273,22 @@ export default function AdminApp({ initial, adminName, adminId, initialView = 'd
       setBundles(bs => bs.map(b => (set.has(b.id) ? { ...b, active } : b)));
       showToast(`${plural(ids.length, 'bundle')} ${active ? 'activated' : 'deactivated'}.`);
     });
+
+  const bulkDeleteAttributes = ids => {
+    if (ids.length === 0) return;
+    setConfirming({
+      title: 'Delete attributes',
+      message: `Delete ${plural(ids.length, 'selected attribute')}? Existing products keep their saved variations.`,
+      confirmLabel: 'Delete',
+      run: () =>
+        withBusy(async () => {
+          await actions.deleteAttributes(ids);
+          const gone = new Set(ids);
+          setAttributes(as => as.filter(a => !gone.has(a.id)));
+          showToast(`${plural(ids.length, 'attribute')} deleted.`);
+        })
+    });
+  };
 
   const bulkDeleteUsers = ids => {
     if (ids.length === 0) return;
@@ -336,6 +374,14 @@ export default function AdminApp({ initial, adminName, adminId, initialView = 'd
               search={search}
               onDelete={askDeleteCategory}
               onBulkDelete={bulkDeleteCategories}
+            />
+          )}
+          {view === 'attributes' && (
+            <Attributes
+              attributes={attributes}
+              search={search}
+              onDelete={askDeleteAttribute}
+              onBulkDelete={bulkDeleteAttributes}
             />
           )}
           {view === 'orders' && (

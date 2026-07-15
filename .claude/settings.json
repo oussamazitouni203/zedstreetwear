@@ -14,7 +14,11 @@
       "Bash(PORT=3146 npm run start)",
       "Bash(curl -s -o /dev/null http://localhost:3146/)",
       "Bash(curl -s http://localhost:3146/)",
-      "Bash(node ./_time.mjs)"
+      "Bash(node ./_time.mjs)",
+      "Bash(npx next *)",
+      "Bash(node -e 'const{PrismaClient}=require\\('\\\\''@prisma/client'\\\\''\\);const p=new PrismaClient\\(\\);p.attribute.findMany\\(\\).then\\(a=>{console.log\\('\\\\''attributes:'\\\\'',a.map\\(x=>x.name+'\\\\'':['\\\\''+x.values.join\\('\\\\'','\\\\''\\)+'\\\\'']'\\\\''\\).join\\('\\\\'' | '\\\\''\\)\\);return p.$disconnect\\(\\)}\\)')",
+      "Bash(node -e 'const{PrismaClient}=require\\('\\\\''@prisma/client'\\\\''\\);const p=new PrismaClient\\(\\);p.$queryRaw`SELECT 1`.then\\(\\(\\)=>{console.log\\('\\\\''warm'\\\\''\\);process.exit\\(0\\)}\\).catch\\(\\(\\)=>process.exit\\(1\\)\\)')",
+      "Bash(node -e 'const{PrismaClient}=require\\('\\\\''@prisma/client'\\\\''\\);const p=new PrismaClient\\(\\);p.attribute.findMany\\(\\).then\\(a=>{console.log\\('\\\\''attributes:'\\\\'',a.map\\(x=>x.name\\).join\\('\\\\'', '\\\\''\\)\\);return p.$disconnect\\(\\)}\\)')"
     ]
   }
 }

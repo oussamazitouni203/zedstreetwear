@@ -3,7 +3,7 @@
 import { revalidateTag } from 'next/cache';
 import { prisma } from '../../lib/prisma.js';
 import { getCurrentSession, hashPassword } from '../../lib/auth.js';
-import { mapProduct, mapBundle, mapCategory, mapUser, dbStatus, slugify } from './_map.js';
+import { mapProduct, mapBundle, mapCategory, mapUser, mapAttribute, dbStatus, slugify } from './_map.js';
 import { listOrders } from './queries.js';
 
 const bundleInclude = { items: { include: { product: true } } };
@@ -88,37 +88,92 @@ export async function saveProduct(input) {
   const categoryIds = Array.isArray(input.categoryIds) ? input.categoryIds.filter(Boolean) : [];
 
   const name = String(input.name || '').trim() || 'Untitled product';
+  const isVariable = input.type === 'variable';
+
+  // Normalize attributes + variations for variable products.
+  const attributes = isVariable ? normalizeAttributes(input.attributes) : [];
+  const variations = isVariable ? normalizeVariations(input.variations) : [];
+
+  const additionalInfo = (Array.isArray(input.additionalInfo) ? input.additionalInfo : [])
+    .map(r => ({ label: String(r?.label || '').trim(), value: String(r?.value || '').trim() }))
+    .filter(r => r.label && r.value);
+
   const promoRaw = input.promoPrice;
   const data = {
     name,
     shortDescription: String(input.shortDescription || '').trim() || null,
-    description: String(input.description || '').trim() || null,
-    price: Number(input.price) || 0,
-    promoPrice: promoRaw === '' || promoRaw == null ? null : Number(promoRaw),
-    type: input.type === 'variable' ? 'variable' : 'simple',
+    type: isVariable ? 'variable' : 'simple',
     principalImage: String(input.principalImage || '').trim() || null,
     gallery: normalizeGallery(input.gallery),
-    sizes: normalizeSizes(input.sizes),
-    color: String(input.color || '').trim() || null,
-    stock: Number(input.stock) || 0,
-    tag: String(input.tag || '').trim() || null
+    tag: String(input.tag || '').trim() || null,
+    attributes: isVariable ? attributes : null,
+    additionalInfo
   };
+
+  if (isVariable) {
+    // Product-level price/stock derive from the variations (min price, summed stock).
+    const effective = variations.map(v => v.promoPrice ?? v.price);
+    data.price = effective.length ? Math.min(...effective) : 0;
+    data.promoPrice = null;
+    data.stock = variations.reduce((s, v) => s + v.stock, 0);
+    data.sizes = [];
+    data.color = null;
+  } else {
+    data.price = Number(input.price) || 0;
+    data.promoPrice = promoRaw === '' || promoRaw == null ? null : Number(promoRaw);
+    data.stock = Number(input.stock) || 0;
+    data.sizes = normalizeSizes(input.sizes);
+    data.color = String(input.color || '').trim() || null;
+  }
 
   let product;
   if (input.id) {
     data.slug = await uniqueProductSlug(slugify(name), input.id);
     data.categories = { set: categoryIds.map(id => ({ id })) };
+    // Replace variations wholesale (simplest correct approach for the editor).
+    data.variations = {
+      deleteMany: {},
+      create: variations.map(v => ({ options: v.options, price: v.price, promoPrice: v.promoPrice, stock: v.stock }))
+    };
     product = await prisma.product.update({
       where: { id: input.id },
       data,
-      include: { categories: true }
+      include: { categories: true, variations: true }
     });
   } else {
     data.slug = await uniqueProductSlug(slugify(name));
     data.categories = { connect: categoryIds.map(id => ({ id })) };
-    product = await prisma.product.create({ data, include: { categories: true } });
+    data.variations = {
+      create: variations.map(v => ({ options: v.options, price: v.price, promoPrice: v.promoPrice, stock: v.stock }))
+    };
+    product = await prisma.product.create({ data, include: { categories: true, variations: true } });
   }
   return mapProduct(product);
+}
+
+// [{ name, values: [] }] with trimmed, de-duped values.
+function normalizeAttributes(attrs) {
+  if (!Array.isArray(attrs)) return [];
+  return attrs
+    .map(a => ({
+      name: String(a?.name || '').trim(),
+      values: (Array.isArray(a?.values) ? a.values : String(a?.values || '').split(','))
+        .map(v => String(v).trim())
+        .filter(Boolean)
+    }))
+    .filter(a => a.name && a.values.length);
+}
+
+function normalizeVariations(vars) {
+  if (!Array.isArray(vars)) return [];
+  return vars
+    .filter(v => v && v.options && Object.keys(v.options).length)
+    .map(v => ({
+      options: v.options,
+      price: Number(v.price) || 0,
+      promoPrice: v.promoPrice === '' || v.promoPrice == null ? null : Number(v.promoPrice),
+      stock: Number(v.stock) || 0
+    }));
 }
 
 export async function deleteProduct(id) {
@@ -342,6 +397,62 @@ export async function deleteUser(id) {
   if (adminCount <= 1) throw new Error('You can’t delete the last admin.');
   await prisma.user.delete({ where: { id } });
   return { id };
+}
+
+// ---------- Attributes (global, reusable) ----------
+
+async function uniqueAttributeSlug(base, ignoreId) {
+  const root = base || 'attribute';
+  let slug = root;
+  let n = 1;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const existing = await prisma.attribute.findUnique({ where: { slug } });
+    if (!existing || existing.id === ignoreId) return slug;
+    slug = `${root}-${++n}`;
+  }
+}
+
+export async function saveAttribute(input) {
+  await requireAdmin();
+  const name = String(input.name || '').trim();
+  if (!name) throw new Error('Attribute name is required.');
+
+  const raw = Array.isArray(input.values) ? input.values : String(input.values || '').split(',');
+  const seen = new Set();
+  const values = [];
+  for (const v of raw.map(x => String(x).trim()).filter(Boolean)) {
+    const k = v.toLowerCase();
+    if (!seen.has(k)) { seen.add(k); values.push(v); }
+  }
+  if (values.length === 0) throw new Error('Add at least one value.');
+
+  const clash = await prisma.attribute.findFirst({ where: { name } });
+  if (clash && clash.id !== input.id) throw new Error('An attribute with that name already exists.');
+
+  const data = { name, values };
+  let attribute;
+  if (input.id) {
+    data.slug = await uniqueAttributeSlug(slugify(name), input.id);
+    attribute = await prisma.attribute.update({ where: { id: input.id }, data });
+  } else {
+    data.slug = await uniqueAttributeSlug(slugify(name));
+    attribute = await prisma.attribute.create({ data });
+  }
+  return mapAttribute(attribute);
+}
+
+export async function deleteAttribute(id) {
+  await requireAdmin();
+  await prisma.attribute.delete({ where: { id } });
+  return { id };
+}
+
+export async function deleteAttributes(ids) {
+  await requireAdmin();
+  const list = Array.isArray(ids) ? ids : [];
+  await prisma.attribute.deleteMany({ where: { id: { in: list } } });
+  return { ids: list };
 }
 
 export async function deleteUsers(ids) {

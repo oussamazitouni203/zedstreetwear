@@ -5,7 +5,7 @@ import AdminApp from './AdminApp.jsx';
 
 export const dynamic = 'force-dynamic';
 
-const TABS = ['dashboard', 'products', 'categories', 'orders', 'bundles', 'users'];
+const TABS = ['dashboard', 'products', 'categories', 'attributes', 'orders', 'bundles', 'users'];
 
 export default async function AdminPage({ searchParams }) {
   const session = await getCurrentSession();

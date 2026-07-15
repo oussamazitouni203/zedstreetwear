@@ -54,7 +54,16 @@ export function mapProduct(p) {
     sizes: p.sizes ?? [],
     color: p.color ?? '',
     stock: p.stock,
-    tag: p.tag ?? ''
+    tag: p.tag ?? '',
+    attributes: Array.isArray(p.attributes) ? p.attributes : [],
+    additionalInfo: Array.isArray(p.additionalInfo) ? p.additionalInfo : [],
+    variations: (p.variations ?? []).map(v => ({
+      id: v.id,
+      options: v.options ?? {},
+      price: v.price,
+      promoPrice: v.promoPrice ?? null,
+      stock: v.stock
+    }))
   };
 }
 
@@ -90,6 +99,15 @@ export function mapBundle(b) {
     base: products.reduce((sum, p) => sum + (p.price ?? 0), 0),
     discount: b.discount,
     active: b.active
+  };
+}
+
+export function mapAttribute(a) {
+  return {
+    id: a.id,
+    name: a.name,
+    slug: a.slug,
+    values: a.values ?? []
   };
 }
 

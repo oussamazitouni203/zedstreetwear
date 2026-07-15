@@ -7,7 +7,13 @@ import { saveProduct } from '../actions.js';
 import { TAGS } from '../data.js';
 import MultiSelect from '../components/MultiSelect.jsx';
 import Select from '../components/Select.jsx';
+import VariationsEditor from './VariationsEditor.jsx';
 import '../admin.css';
+
+const keyOf = options =>
+  Object.entries(options || {})
+    .map(([k, v]) => `${k}:${v}`)
+    .join('|');
 
 const slugify = s =>
   String(s || '')
@@ -19,7 +25,7 @@ const slugify = s =>
 const EMPTY = {
   name: '',
   shortDescription: '',
-  description: '',
+  additionalInfo: [],
   price: 0,
   promoPrice: '',
   type: 'simple',
@@ -32,7 +38,7 @@ const EMPTY = {
   gallery: ''
 };
 
-export default function ProductForm({ product = null, categories = [] }) {
+export default function ProductForm({ product = null, categories = [], globalAttributes = [] }) {
   const router = useRouter();
 
   const [form, setForm] = useState(() =>
@@ -43,14 +49,32 @@ export default function ProductForm({ product = null, categories = [] }) {
           promoPrice: product.promoPrice ?? '',
           categoryIds: Array.isArray(product.categoryIds) ? product.categoryIds : [],
           sizes: Array.isArray(product.sizes) ? product.sizes.join(', ') : product.sizes || '',
-          gallery: Array.isArray(product.gallery) ? product.gallery.join('\n') : product.gallery || ''
+          gallery: Array.isArray(product.gallery) ? product.gallery.join('\n') : product.gallery || '',
+          additionalInfo: Array.isArray(product.additionalInfo) ? product.additionalInfo : [],
+          attributes: (product.attributes || []).map(a => ({
+            name: a.name,
+            values: a.values || []
+          })),
+          variations: (product.variations || []).map(v => ({
+            key: keyOf(v.options),
+            options: v.options,
+            price: v.price,
+            promoPrice: v.promoPrice ?? '',
+            stock: v.stock
+          }))
         }
-      : { ...EMPTY }
+      : { ...EMPTY, attributes: [], variations: [] }
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const set = (key, value) => setForm(f => ({ ...f, [key]: value }));
+
+  // Additional information — repeatable label/value rows.
+  const addInfoRow = () => set('additionalInfo', [...form.additionalInfo, { label: '', value: '' }]);
+  const setInfoRow = (i, patch) =>
+    set('additionalInfo', form.additionalInfo.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+  const removeInfoRow = i => set('additionalInfo', form.additionalInfo.filter((_, idx) => idx !== i));
 
   // Flatten categories into a parent → child ordered list with a depth for indentation.
   const categoryTree = (() => {
@@ -81,7 +105,20 @@ export default function ProductForm({ product = null, categories = [] }) {
         name: form.name.trim() || 'Untitled product',
         price: Number(form.price) || 0,
         stock: Number(form.stock) || 0,
-        promoPrice: form.promoPrice === '' ? null : Number(form.promoPrice)
+        promoPrice: form.promoPrice === '' ? null : Number(form.promoPrice),
+        additionalInfo: form.additionalInfo
+          .map(r => ({ label: (r.label || '').trim(), value: (r.value || '').trim() }))
+          .filter(r => r.label && r.value),
+        attributes: form.attributes.map(a => ({
+          name: a.name.trim(),
+          values: (a.values || []).map(s => String(s).trim()).filter(Boolean)
+        })),
+        variations: form.variations.map(v => ({
+          options: v.options,
+          price: Number(v.price) || 0,
+          promoPrice: v.promoPrice === '' ? null : Number(v.promoPrice),
+          stock: Number(v.stock) || 0
+        }))
       });
       router.refresh(); // bust the router cache so the list shows the change
       router.push(`/admin?tab=products&notice=${product ? 'product-updated' : 'product-added'}`);
@@ -107,18 +144,31 @@ export default function ProductForm({ product = null, categories = [] }) {
             <input
               value={form.shortDescription}
               onChange={e => set('shortDescription', e.target.value)}
-              placeholder="One-line summary"
+              placeholder="One-line summary — shown under the title"
             />
           </label>
-          <label>
-            Description
-            <textarea
-              rows={4}
-              value={form.description}
-              onChange={e => set('description', e.target.value)}
-              placeholder="Full product description"
-            />
-          </label>
+          <div className="adm-form__field">
+            <p className="adm-form__label">Additional information</p>
+            {form.additionalInfo.map((row, i) => (
+              <div key={i} className="info-row">
+                <input
+                  placeholder="Label (e.g. Material)"
+                  value={row.label}
+                  onChange={e => setInfoRow(i, { label: e.target.value })}
+                />
+                <input
+                  placeholder="Value (e.g. 100% heavyweight cotton)"
+                  value={row.value}
+                  onChange={e => setInfoRow(i, { value: e.target.value })}
+                />
+                <button type="button" className="delete-btn" onClick={() => removeInfoRow(i)} aria-label="Remove">✕</button>
+              </div>
+            ))}
+            <div>
+              <button type="button" className="adm-btn--small" onClick={addInfoRow}>+ Add info</button>
+            </div>
+            <p className="adm-form__hint">Shown on the product page below the available options (e.g. Material, Fit, Care).</p>
+          </div>
 
           <div className="adm-form__field">
             <p className="adm-form__label">Type</p>
@@ -152,51 +202,67 @@ export default function ProductForm({ product = null, categories = [] }) {
             )}
           </div>
 
-          <div className="adm-form__row">
-            <label>
-              Price ($)
-              <input type="number" min="0" value={form.price} onChange={e => set('price', e.target.value)} />
-            </label>
-            <label>
-              Promo price ($)
-              <input
-                type="number"
-                min="0"
-                value={form.promoPrice}
-                onChange={e => set('promoPrice', e.target.value)}
-                placeholder="optional"
-              />
-            </label>
+          <div className="adm-form__field">
+            <p className="adm-form__label">Tag</p>
+            <Select
+              value={form.tag}
+              onChange={v => set('tag', v)}
+              options={TAGS.map(t => ({ value: t, label: t || 'None' }))}
+            />
           </div>
 
-          <div className="adm-form__row">
-            <label>
-              Stock
-              <input type="number" min="0" value={form.stock} onChange={e => set('stock', e.target.value)} />
-            </label>
-            <div className="adm-form__field">
-              <p className="adm-form__label">Tag</p>
-              <Select
-                value={form.tag}
-                onChange={v => set('tag', v)}
-                options={TAGS.map(t => ({ value: t, label: t || 'None' }))}
-              />
-            </div>
-          </div>
+          {/* Product data — differs by type, like WooCommerce */}
+          <div className="adm-form__section">
+            <p className="adm-form__section-title">
+              {form.type === 'variable' ? 'Variable product data' : 'Simple product data'}
+            </p>
 
-          <div className="adm-form__row">
-            <label>
-              Sizes (comma-separated)
-              <input
-                value={form.sizes}
-                onChange={e => set('sizes', e.target.value)}
-                placeholder="S, M, L, XL  ·  or  OS"
+            {form.type === 'simple' ? (
+              <>
+                <div className="adm-form__row">
+                  <label>
+                    Price ($)
+                    <input type="number" min="0" value={form.price} onChange={e => set('price', e.target.value)} />
+                  </label>
+                  <label>
+                    Promo price ($)
+                    <input
+                      type="number"
+                      min="0"
+                      value={form.promoPrice}
+                      onChange={e => set('promoPrice', e.target.value)}
+                      placeholder="optional"
+                    />
+                  </label>
+                </div>
+                <div className="adm-form__row">
+                  <label>
+                    Stock
+                    <input type="number" min="0" value={form.stock} onChange={e => set('stock', e.target.value)} />
+                  </label>
+                  <label>
+                    Color
+                    <input value={form.color} onChange={e => set('color', e.target.value)} placeholder="Black" />
+                  </label>
+                </div>
+                <label>
+                  Sizes (comma-separated)
+                  <input
+                    value={form.sizes}
+                    onChange={e => set('sizes', e.target.value)}
+                    placeholder="S, M, L, XL  ·  or  OS"
+                  />
+                </label>
+              </>
+            ) : (
+              <VariationsEditor
+                globalAttributes={globalAttributes}
+                attributes={form.attributes}
+                variations={form.variations}
+                onAttributes={a => set('attributes', a)}
+                onVariations={v => set('variations', v)}
               />
-            </label>
-            <label>
-              Color
-              <input value={form.color} onChange={e => set('color', e.target.value)} placeholder="Black" />
-            </label>
+            )}
           </div>
 
           <label>

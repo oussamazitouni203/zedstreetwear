@@ -58,13 +58,13 @@ export default function Users({ users, search, currentUserId, onDelete, onBulkDe
               />
             </span>
             <div className="customer-avatar">{initials(u.name)}</div>
-            <span style={{ fontWeight: 500 }}>
+            <span className="cell-primary" style={{ fontWeight: 500 }}>
               {u.name}
               {u.id === currentUserId && <span className="you-badge">You</span>}
             </span>
-            <span style={{ color: '#666' }}>{u.email}</span>
-            <span>Admin</span>
-            <span style={{ color: '#999' }}>{u.joined}</span>
+            <span data-label="Email" style={{ color: '#666' }}>{u.email}</span>
+            <span data-label="Role">Admin</span>
+            <span data-label="Joined" style={{ color: '#999' }}>{u.joined}</span>
             <div className="row-actions">
               <Link className="adm-btn--small" href={`/admin/users/${u.id}/edit`}>Edit</Link>
               <button

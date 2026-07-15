@@ -113,12 +113,12 @@ export default function Orders({ orders, search, onOpen, onBulkState, onBulkDele
                   aria-label={`Select ${o.number}`}
                 />
               </span>
-              <span className="num" style={{ color: '#999' }}>{o.number}</span>
-              <span style={{ fontWeight: 500 }}>{o.customer}</span>
-              <span style={{ color: '#666' }}>{o.date}</span>
-              <span className="num" style={{ fontWeight: 600 }}>{money(o.total)}</span>
-              <StatusPill status={o.status} />
-              <span style={{ justifySelf: 'end', color: '#bbb' }}>›</span>
+              <span className="cell-primary num">{o.number}</span>
+              <span data-label="Customer" style={{ fontWeight: 500 }}>{o.customer}</span>
+              <span data-label="Date" style={{ color: '#666' }}>{o.date}</span>
+              <span data-label="Total" className="num" style={{ fontWeight: 600 }}>{money(o.total)}</span>
+              <span data-label="Status" className="cell-status"><StatusPill status={o.status} /></span>
+              <span className="cell-chevron" style={{ justifySelf: 'end', color: '#bbb' }}>›</span>
             </div>
           ))
         )}

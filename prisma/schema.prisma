@@ -85,16 +85,48 @@ model Product {
   categories       Category[]   @relation("ProductCategories")
   principalImage   String?
   gallery          String[] // extra image URLs
-  sizes            String[] // e.g. ["S","M","L","XL"] or ["OS"]
+  sizes            String[] // simple products: e.g. ["S","M","L","XL"] or ["OS"]
   color            String?
   stock            Int          @default(0)
   tag              String?
+  // Variable products: attribute definitions [{ name, values: [] }].
+  attributes       Json?
+  // Structured product details shown on the PDP: [{ label, value }].
+  additionalInfo   Json?
+  variations       ProductVariation[]
   orderItems       OrderItem[]
   bundleItems      BundleItem[]
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
   @@map("products")
+}
+
+// Global, reusable attribute (WooCommerce-style), e.g. Size -> [S, M, L, XL].
+// Products pick from these when building variations.
+model Attribute {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  values    String[]
+  createdAt DateTime @default(now())
+
+  @@map("attributes")
+}
+
+// A single variation of a variable product, e.g. { Size: "M", Color: "Black" }.
+model ProductVariation {
+  id         String   @id @default(cuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  options    Json // { "Size": "M", "Color": "Black" }
+  price      Float
+  promoPrice Float?
+  stock      Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@index([productId])
+  @@map("product_variations")
 }
 
 // ---------- Orders ----------

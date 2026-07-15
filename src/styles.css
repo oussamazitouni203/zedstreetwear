@@ -813,6 +813,15 @@ a.instagram__tile:hover img { transform: scale(1.05); }
 }
 .size-btn:hover { border-color: #111; }
 .size-btn.active { background: #111; color: #fff; border-color: #111; }
+.size-btn.unavailable {
+  color: #c9c9c9; border-color: #eee; cursor: not-allowed; position: relative; background: transparent;
+}
+.size-btn.unavailable:hover { border-color: #eee; }
+/* diagonal line to signal "not available" */
+.size-btn.unavailable::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to top left, transparent calc(50% - 1px), #e0e0e0 calc(50% - 1px), #e0e0e0 calc(50% + 1px), transparent calc(50% + 1px));
+}
 
 .pdp__actions { display: flex; gap: 16px; margin-top: 32px; align-items: stretch; }
 .pdp__qty { display: flex; align-items: center; border: 1px solid #ddd; flex: 0 0 auto; }
@@ -831,6 +840,11 @@ a.instagram__tile:hover img { transform: scale(1.05); }
 }
 .pdp__spec dt { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: #999; }
 .pdp__spec dd { font-size: 14px; color: #111; margin: 0; text-align: right; max-width: 60%; }
+
+.pdp__section { margin-top: 32px; border-top: 1px solid #e5e5e5; padding-top: 24px; }
+.pdp__section .pdp__label { margin-bottom: 4px; }
+.pdp__section .pdp__specs { margin-top: 12px; border-top: none; }
+.pdp__details { margin-top: 14px; font-size: 14px; line-height: 1.75; color: #555; white-space: pre-line; }
 
 .pdp__related { margin-top: 112px; }
 .pdp__related-title { font-size: 28px; margin-bottom: 40px; }

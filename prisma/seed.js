@@ -81,6 +81,19 @@ async function main() {
     catByName[name] = cat;
   }
 
+  // --- Global attributes ---
+  const ATTRIBUTES = [
+    { name: 'Size', values: ['S', 'M', 'L', 'XL'] },
+    { name: 'Color', values: ['Black', 'White', 'Grey', 'Off-white'] }
+  ];
+  for (const a of ATTRIBUTES) {
+    await prisma.attribute.upsert({
+      where: { slug: slugify(a.name) },
+      update: { values: a.values },
+      create: { name: a.name, slug: slugify(a.name), values: a.values }
+    });
+  }
+
   // --- Products ---
   const prodByName = {};
   for (const p of PRODUCTS) {

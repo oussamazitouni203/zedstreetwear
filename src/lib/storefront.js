@@ -86,15 +86,54 @@ export const getShopData = unstable_cache(
 
 export const getProduct = unstable_cache(
   async (id) => {
-    const p = await prisma.product.findUnique({ where: { id }, include: { categories: true } });
+    const p = await prisma.product.findUnique({
+      where: { id },
+      include: { categories: true, variations: { orderBy: { createdAt: 'asc' } } }
+    });
     if (!p) return null;
     const card = toCard(p);
     const images = [...new Set([p.principalImage, ...(p.gallery || [])].filter(Boolean))];
+
+    const variations = (p.variations || []).map(v => ({
+      id: v.id,
+      options: v.options || {},
+      price: v.promoPrice ?? v.price, // effective price
+      fullPrice: v.price,
+      promoPrice: v.promoPrice ?? null,
+      inStock: v.stock > 0
+    }));
+    const attributes = Array.isArray(p.attributes) ? p.attributes : [];
+    const isVariable = p.type === 'variable' && variations.length > 0;
+    const fromPrice = isVariable ? Math.min(...variations.map(v => v.price)) : card.price;
+
+    // "Available options" shown on the product page. For variable products the
+    // values come from the actual variations; for simple ones, from sizes/color.
+    let optionGroups = [];
+    if (isVariable) {
+      const map = {};
+      for (const v of variations) {
+        for (const [name, val] of Object.entries(v.options)) {
+          if (!map[name]) map[name] = [];
+          if (!map[name].includes(val)) map[name].push(val);
+        }
+      }
+      optionGroups = Object.entries(map).map(([name, values]) => ({ name, values }));
+    } else {
+      if (p.sizes?.length) optionGroups.push({ name: 'Size', values: p.sizes });
+      if (p.color) optionGroups.push({ name: 'Color', values: [p.color] });
+    }
+
     return {
       ...card,
+      type: p.type,
+      isVariable,
+      attributes,
+      variations,
+      fromPrice,
       images,
-      description: p.description || p.shortDescription || `A ${card.name} from the SS26 range — cut clean, built to last.`,
-      specs: specsFor(card)
+      optionGroups,
+      summary: p.shortDescription || '',
+      additionalInfo: Array.isArray(p.additionalInfo) ? p.additionalInfo : []
     };
   },
   ['product'],

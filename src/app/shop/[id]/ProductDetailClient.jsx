@@ -10,11 +10,55 @@ export default function ProductDetailClient({ product, related }) {
   const [size, setSize] = useState(product.sizes[0]);
   const [qty, setQty] = useState(1);
   const [active, setActive] = useState(0);
+  const [options, setOptions] = useState({}); // variable products: attr -> value
 
   const categoryName = product.categoryName || product.category;
-  const specs = product.specs;
   const oneSize = product.sizes.length === 1 && product.sizes[0] === 'OS';
   const images = product.images?.length ? product.images : [null];
+
+  const isVariable = product.isVariable;
+  const variations = product.variations;
+
+  // The variation matching every currently-selected attribute value.
+  const chosen = isVariable
+    ? variations.find(v => product.attributes.every(a => v.options[a.name] === options[a.name]))
+    : null;
+  const displayPrice = isVariable ? (chosen ? chosen.price : product.fromPrice) : product.price;
+
+  // A value is selectable only if some variation exists that combines it with
+  // the values already chosen for the OTHER attributes.
+  const isValueAvailable = (attrName, val) => {
+    const constraint = { [attrName]: val };
+    for (const a of product.attributes) {
+      if (a.name !== attrName && options[a.name]) constraint[a.name] = options[a.name];
+    }
+    return variations.some(v => Object.entries(constraint).every(([k, x]) => v.options[k] === x));
+  };
+
+  // Select a value, then drop any other selection that no longer has a match.
+  const selectValue = (attrName, val) => {
+    setOptions(prev => {
+      const next = { ...prev, [attrName]: val };
+      for (const a of product.attributes) {
+        if (a.name === attrName) continue;
+        const other = next[a.name];
+        if (other && !variations.some(v => v.options[attrName] === val && v.options[a.name] === other)) {
+          delete next[a.name];
+        }
+      }
+      return next;
+    });
+  };
+
+  const handleAdd = () => {
+    if (isVariable) {
+      if (!chosen || !chosen.inStock) return;
+      const label = product.attributes.map(a => options[a.name]).join(' / ');
+      addItem({ id: product.id, name: product.name, price: chosen.price, image: product.image }, label, qty);
+    } else {
+      addItem(product, size, qty);
+    }
+  };
 
   return (
     <main className="pdp">
@@ -55,26 +99,54 @@ export default function ProductDetailClient({ product, related }) {
         <div className="pdp__info">
           <p className="pdp__category">{categoryName}</p>
           <h1 className="pdp__title">{product.name}</h1>
-          <p className="pdp__price">${product.price}</p>
-          <p className="pdp__blurb">{product.description}</p>
+          <p className="pdp__price">
+            {isVariable && !chosen ? `From $${product.fromPrice}` : `$${displayPrice}`}
+          </p>
+          {product.summary && <p className="pdp__blurb">{product.summary}</p>}
 
-          <div className="pdp__row">
-            <div className="pdp__row-head">
-              <span className="pdp__label">{oneSize ? 'Size' : 'Select size'}</span>
+          {isVariable ? (
+            product.attributes.map(attr => (
+              <div key={attr.name} className="pdp__row">
+                <div className="pdp__row-head">
+                  <span className="pdp__label">{attr.name}</span>
+                </div>
+                <div className="pdp__sizes">
+                  {attr.values.map(val => {
+                    const available = isValueAvailable(attr.name, val);
+                    return (
+                      <button
+                        key={val}
+                        className={`size-btn${options[attr.name] === val ? ' active' : ''}${available ? '' : ' unavailable'}`}
+                        onClick={() => selectValue(attr.name, val)}
+                        disabled={!available}
+                        aria-pressed={options[attr.name] === val}
+                      >
+                        {val}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="pdp__row">
+              <div className="pdp__row-head">
+                <span className="pdp__label">{oneSize ? 'Size' : 'Select size'}</span>
+              </div>
+              <div className="pdp__sizes">
+                {product.sizes.map(s => (
+                  <button
+                    key={s}
+                    className={`size-btn${s === size ? ' active' : ''}`}
+                    onClick={() => setSize(s)}
+                    aria-pressed={s === size}
+                  >
+                    {s === 'OS' ? 'One size' : s}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="pdp__sizes">
-              {product.sizes.map(s => (
-                <button
-                  key={s}
-                  className={`size-btn${s === size ? ' active' : ''}`}
-                  onClick={() => setSize(s)}
-                  aria-pressed={s === size}
-                >
-                  {s === 'OS' ? 'One size' : s}
-                </button>
-              ))}
-            </div>
-          </div>
+          )}
 
           <div className="pdp__actions">
             <div className="pdp__qty" aria-label="Quantity">
@@ -82,19 +154,46 @@ export default function ProductDetailClient({ product, related }) {
               <span>{qty}</span>
               <button aria-label="Increase quantity" onClick={() => setQty(q => q + 1)}>+</button>
             </div>
-            <button className="btn btn--black pdp__add" onClick={() => addItem(product, size, qty)}>
-              Add to cart — ${product.price * qty}
+            <button
+              className="btn btn--black pdp__add"
+              onClick={handleAdd}
+              disabled={isVariable && (!chosen || !chosen.inStock)}
+            >
+              {isVariable && !chosen
+                ? 'Select options'
+                : isVariable && !chosen.inStock
+                ? 'Out of stock'
+                : `Add to cart — $${displayPrice * qty}`}
             </button>
           </div>
 
-          <dl className="pdp__specs">
-            {specs.map(s => (
-              <div key={s.label} className="pdp__spec">
-                <dt>{s.label}</dt>
-                <dd>{s.value}</dd>
-              </div>
-            ))}
-          </dl>
+          {product.optionGroups.length > 0 && (
+            <div className="pdp__section">
+              <p className="pdp__label">Available options</p>
+              <dl className="pdp__specs">
+                {product.optionGroups.map(g => (
+                  <div key={g.name} className="pdp__spec">
+                    <dt>{g.name}</dt>
+                    <dd>{g.values.join(', ')}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          )}
+
+          {product.additionalInfo.length > 0 && (
+            <div className="pdp__section">
+              <p className="pdp__label">Additional information</p>
+              <dl className="pdp__specs">
+                {product.additionalInfo.map(info => (
+                  <div key={info.label} className="pdp__spec">
+                    <dt>{info.label}</dt>
+                    <dd>{info.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          )}
         </div>
       </div>
 

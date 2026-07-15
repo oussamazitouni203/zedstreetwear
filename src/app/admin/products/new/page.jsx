@@ -13,10 +13,10 @@ export default async function NewProductPage() {
     redirect('/login?next=/admin/products/new');
   }
 
-  const { categories, pendingCount } = await getAdminFormData(null);
+  const { categories, attributes, pendingCount } = await getAdminFormData(null);
   return (
     <AdminShell adminName={session.name} pendingCount={pendingCount} active="products" title="Add product">
-      <ProductForm categories={categories} />
+      <ProductForm categories={categories} globalAttributes={attributes} />
     </AdminShell>
   );
 }

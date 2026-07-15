@@ -1,5 +1,5 @@
 import { prisma } from '../../lib/prisma.js';
-import { mapProduct, mapOrder, mapBundle, mapUser, mapCategory } from './_map.js';
+import { mapProduct, mapOrder, mapBundle, mapUser, mapCategory, mapAttribute } from './_map.js';
 
 // Data for the user (admin account) add/edit page.
 export async function getUserFormData(id) {
@@ -10,6 +10,15 @@ export async function getUserFormData(id) {
   return { user: user ? mapUser(user) : null, pendingCount };
 }
 
+// Data for the attribute add/edit page.
+export async function getAttributeFormData(id) {
+  const [attribute, pendingCount] = await Promise.all([
+    id ? prisma.attribute.findUnique({ where: { id } }) : null,
+    prisma.order.count({ where: { status: 'PENDING', state: 'CURRENT' } })
+  ]);
+  return { attribute: attribute ? mapAttribute(attribute) : null, pendingCount };
+}
+
 const categoryListArgs = {
   orderBy: { name: 'asc' },
   include: { parent: { select: { name: true } }, _count: { select: { products: true } } }
@@ -17,13 +26,20 @@ const categoryListArgs = {
 
 // Data for the product add/edit page: category options + (for edit) the product.
 export async function getAdminFormData(id) {
-  const [categories, product, pendingCount] = await Promise.all([
+  const [categories, attributes, product, pendingCount] = await Promise.all([
     prisma.category.findMany(categoryListArgs),
-    id ? prisma.product.findUnique({ where: { id }, include: { categories: true } }) : null,
+    prisma.attribute.findMany({ orderBy: { name: 'asc' } }),
+    id
+      ? prisma.product.findUnique({
+          where: { id },
+          include: { categories: true, variations: { orderBy: { createdAt: 'asc' } } }
+        })
+      : null,
     prisma.order.count({ where: { status: 'PENDING', state: 'CURRENT' } })
   ]);
   return {
     categories: categories.map(mapCategory),
+    attributes: attributes.map(mapAttribute),
     product: product ? mapProduct(product) : null,
     pendingCount
   };
@@ -71,7 +87,7 @@ export async function listOrders() {
 }
 
 export async function getAdminData() {
-  const [products, orders, bundles, users, categories] = await Promise.all([
+  const [products, orders, bundles, users, categories, attributes] = await Promise.all([
     prisma.product.findMany({ include: { categories: true }, orderBy: { createdAt: 'asc' } }),
     prisma.order.findMany({ include: { user: true, items: true }, orderBy: { seq: 'desc' } }),
     prisma.bundle.findMany({
@@ -79,7 +95,8 @@ export async function getAdminData() {
       orderBy: { createdAt: 'asc' }
     }),
     prisma.user.findMany({ where: { role: 'ADMIN' }, orderBy: { createdAt: 'asc' } }),
-    prisma.category.findMany(categoryListArgs)
+    prisma.category.findMany(categoryListArgs),
+    prisma.attribute.findMany({ orderBy: { name: 'asc' } })
   ]);
 
   return {
@@ -87,6 +104,7 @@ export async function getAdminData() {
     orders: orders.map(mapOrder),
     bundles: bundles.map(mapBundle),
     users: users.map(mapUser),
-    categories: categories.map(mapCategory)
+    categories: categories.map(mapCategory),
+    attributes: attributes.map(mapAttribute)
   };
 }
