@@ -11,15 +11,17 @@ const BUCKETS = [
 
 const STATUS_FILTERS = ['All', 'Pending', 'Shipped', 'Delivered', 'Canceled', 'Abandoned'];
 
-export default function Orders({ orders, search, onOpen, onBulkState, onBulkDelete }) {
+export default function Orders({ orders, search, onOpen, onBulkState, onBulkStatus, onBulkDelete }) {
   const [bucket, setBucket] = useState('CURRENT');
   const [filter, setFilter] = useState('All');
   const [selected, setSelected] = useState(() => new Set());
   const q = search.trim().toLowerCase();
 
-  const countFor = key => orders.filter(o => o.state === key).length;
+  // Returned orders live in the Return Orders view only — keep this list to live orders.
+  const live = orders.filter(o => o.status !== 'Returned');
+  const countFor = key => live.filter(o => o.state === key).length;
 
-  const filtered = orders
+  const filtered = live
     .filter(o => o.state === bucket)
     .filter(o => filter === 'All' || o.status === filter)
     .filter(o => !q || o.customer.toLowerCase().includes(q) || o.number.toLowerCase().includes(q));
@@ -67,12 +69,14 @@ export default function Orders({ orders, search, onOpen, onBulkState, onBulkDele
       <BulkBar count={selectedIds.length} onClear={clear}>
         {bucket === 'CURRENT' && (
           <>
+            <button className="adm-btn adm-btn--ghost" onClick={() => onBulkStatus(selectedIds, 'Returned')}>↩ Mark as returned</button>
             <button className="adm-btn adm-btn--ghost" onClick={() => onBulkState(selectedIds, 'ARCHIVED')}>Archive</button>
             <button className="adm-btn adm-btn--ghost" onClick={() => onBulkState(selectedIds, 'TRASHED')}>Move to trash</button>
           </>
         )}
         {bucket === 'ARCHIVED' && (
           <>
+            <button className="adm-btn adm-btn--ghost" onClick={() => onBulkStatus(selectedIds, 'Returned')}>↩ Mark as returned</button>
             <button className="adm-btn adm-btn--ghost" onClick={() => onBulkState(selectedIds, 'CURRENT')}>Restore</button>
             <button className="adm-btn adm-btn--ghost" onClick={() => onBulkState(selectedIds, 'TRASHED')}>Move to trash</button>
           </>

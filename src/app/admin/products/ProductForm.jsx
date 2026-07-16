@@ -121,7 +121,7 @@ export default function ProductForm({ product = null, categories = [], globalAtt
         }))
       });
       router.refresh(); // bust the router cache so the list shows the change
-      router.push(`/admin?tab=products&notice=${product ? 'product-updated' : 'product-added'}`);
+      router.push(`/admin/products?notice=${product ? 'product-updated' : 'product-added'}`);
     } catch (err) {
       setError(err?.message || 'Could not save the product.');
       setSaving(false);
@@ -130,7 +130,7 @@ export default function ProductForm({ product = null, categories = [], globalAtt
 
   return (
     <div className="adm-form-page">
-      <Link href="/admin?tab=products" className="adm-form-page__back">← Back to products</Link>
+      <Link href="/admin/products" className="adm-form-page__back">← Back to products</Link>
 
       <form className="adm-form" onSubmit={submit}>
           <label>
@@ -289,7 +289,7 @@ export default function ProductForm({ product = null, categories = [], globalAtt
             <button type="submit" className="adm-btn" disabled={saving}>
               {saving ? 'Saving…' : 'Save product'}
             </button>
-            <Link href="/admin?tab=products" className="adm-btn adm-btn--ghost">Cancel</Link>
+            <Link href="/admin/products" className="adm-btn adm-btn--ghost">Cancel</Link>
           </div>
       </form>
     </div>

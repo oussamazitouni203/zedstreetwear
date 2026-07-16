@@ -55,7 +55,7 @@ export default function AttributeForm({ attribute = null }) {
         : values;
       await saveAttribute({ id: attribute?.id, name: name.trim(), values: finalValues });
       router.refresh();
-      router.push(`/admin?tab=attributes&notice=${attribute ? 'attribute-updated' : 'attribute-added'}`);
+      router.push(`/admin/attributes?notice=${attribute ? 'attribute-updated' : 'attribute-added'}`);
     } catch (err) {
       setError(err?.message || 'Could not save the attribute.');
       setSaving(false);
@@ -64,7 +64,7 @@ export default function AttributeForm({ attribute = null }) {
 
   return (
     <div className="adm-form-page">
-      <Link href="/admin?tab=attributes" className="adm-form-page__back">← Back to attributes</Link>
+      <Link href="/admin/attributes" className="adm-form-page__back">← Back to attributes</Link>
 
       <form className="adm-form" onSubmit={submit}>
         <label>
@@ -99,7 +99,7 @@ export default function AttributeForm({ attribute = null }) {
           <button type="submit" className="adm-btn" disabled={saving}>
             {saving ? 'Saving…' : 'Save attribute'}
           </button>
-          <Link href="/admin?tab=attributes" className="adm-btn adm-btn--ghost">Cancel</Link>
+          <Link href="/admin/attributes" className="adm-btn adm-btn--ghost">Cancel</Link>
         </div>
       </form>
     </div>

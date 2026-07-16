@@ -55,5 +55,5 @@ export async function createOrder({ items, total, customerName, customerEmail })
       )
   );
 
-  return { number: `#${order.seq}`, total: order.total };
+  return { number: `ORD-${String(order.seq).padStart(5, '0')}`, total: order.total };
 }

@@ -8,14 +8,14 @@ export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Edit bundle — Admin' };
 
 export default async function EditBundlePage({ params }) {
-  const { id } = await params;
+  const { slug } = await params;
 
   const session = await getCurrentSession();
   if (!session || session.role !== 'ADMIN') {
-    redirect(`/login?next=/admin/bundles/${id}/edit`);
+    redirect(`/login?next=/admin/bundles/${slug}/edit`);
   }
 
-  const { products, bundle, pendingCount } = await getBundleFormData(id);
+  const { products, bundle, pendingCount } = await getBundleFormData(slug);
   if (!bundle) notFound();
 
   return (

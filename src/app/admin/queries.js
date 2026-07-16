@@ -1,5 +1,5 @@
 import { prisma } from '../../lib/prisma.js';
-import { mapProduct, mapOrder, mapBundle, mapUser, mapCategory, mapAttribute } from './_map.js';
+import { mapProduct, mapOrder, mapBundle, mapUser, mapCategory, mapAttribute, mapCoupon } from './_map.js';
 
 // Data for the user (admin account) add/edit page.
 export async function getUserFormData(id) {
@@ -8,6 +8,15 @@ export async function getUserFormData(id) {
     prisma.order.count({ where: { status: 'PENDING', state: 'CURRENT' } })
   ]);
   return { user: user ? mapUser(user) : null, pendingCount };
+}
+
+// Data for the coupon add/edit page.
+export async function getCouponFormData(id) {
+  const [coupon, pendingCount] = await Promise.all([
+    id ? prisma.coupon.findUnique({ where: { id } }) : null,
+    prisma.order.count({ where: { status: 'PENDING', state: 'CURRENT' } })
+  ]);
+  return { coupon: coupon ? mapCoupon(coupon) : null, pendingCount };
 }
 
 // Data for the attribute add/edit page.
@@ -25,13 +34,14 @@ const categoryListArgs = {
 };
 
 // Data for the product add/edit page: category options + (for edit) the product.
-export async function getAdminFormData(id) {
+// `slug` identifies the product being edited (null when adding).
+export async function getAdminFormData(slug) {
   const [categories, attributes, product, pendingCount] = await Promise.all([
     prisma.category.findMany(categoryListArgs),
     prisma.attribute.findMany({ orderBy: { name: 'asc' } }),
-    id
+    slug
       ? prisma.product.findUnique({
-          where: { id },
+          where: { slug },
           include: { categories: true, variations: { orderBy: { createdAt: 'asc' } } }
         })
       : null,
@@ -46,11 +56,11 @@ export async function getAdminFormData(id) {
 }
 
 // Data for the bundle add/edit page: all products (to pick from) + the bundle being edited.
-export async function getBundleFormData(id) {
+export async function getBundleFormData(slug) {
   const [products, bundle, pendingCount] = await Promise.all([
     prisma.product.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true, price: true } }),
-    id
-      ? prisma.bundle.findUnique({ where: { id }, include: { items: { include: { product: true } } } })
+    slug
+      ? prisma.bundle.findUnique({ where: { slug }, include: { items: { include: { product: true } } } })
       : null,
     prisma.order.count({ where: { status: 'PENDING', state: 'CURRENT' } })
   ]);
@@ -62,10 +72,10 @@ export async function getBundleFormData(id) {
 }
 
 // Data for the category add/edit page: all categories (for parent select) + the one being edited.
-export async function getCategoryFormData(id) {
+export async function getCategoryFormData(slug) {
   const [categories, category, pendingCount] = await Promise.all([
     prisma.category.findMany(categoryListArgs),
-    id ? prisma.category.findUnique({ where: { id }, include: { parent: { select: { name: true } } } }) : null,
+    slug ? prisma.category.findUnique({ where: { slug }, include: { parent: { select: { name: true } } } }) : null,
     prisma.order.count({ where: { status: 'PENDING', state: 'CURRENT' } })
   ]);
   return {
@@ -87,7 +97,7 @@ export async function listOrders() {
 }
 
 export async function getAdminData() {
-  const [products, orders, bundles, users, categories, attributes] = await Promise.all([
+  const [products, orders, bundles, users, categories, attributes, coupons, setting] = await Promise.all([
     prisma.product.findMany({ include: { categories: true }, orderBy: { createdAt: 'asc' } }),
     prisma.order.findMany({ include: { user: true, items: true }, orderBy: { seq: 'desc' } }),
     prisma.bundle.findMany({
@@ -96,7 +106,9 @@ export async function getAdminData() {
     }),
     prisma.user.findMany({ where: { role: 'ADMIN' }, orderBy: { createdAt: 'asc' } }),
     prisma.category.findMany(categoryListArgs),
-    prisma.attribute.findMany({ orderBy: { name: 'asc' } })
+    prisma.attribute.findMany({ orderBy: { name: 'asc' } }),
+    prisma.coupon.findMany({ orderBy: { createdAt: 'desc' } }),
+    prisma.setting.findUnique({ where: { id: 'store' } })
   ]);
 
   return {
@@ -105,6 +117,8 @@ export async function getAdminData() {
     bundles: bundles.map(mapBundle),
     users: users.map(mapUser),
     categories: categories.map(mapCategory),
-    attributes: attributes.map(mapAttribute)
+    attributes: attributes.map(mapAttribute),
+    coupons: coupons.map(mapCoupon),
+    settings: setting?.data && typeof setting.data === 'object' ? setting.data : {}
   };
 }

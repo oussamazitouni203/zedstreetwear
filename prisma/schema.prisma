@@ -28,12 +28,18 @@ enum OrderStatus {
   DELIVERED
   CANCELED
   ABANDONED
+  RETURNED
 }
 
 enum OrderState {
   CURRENT
   ARCHIVED
   TRASHED
+}
+
+enum CouponType {
+  PERCENT
+  FIXED
 }
 
 // ---------- Users (replaces "customers") ----------
@@ -73,6 +79,7 @@ model Category {
 
 model Product {
   id               String       @id @default(cuid())
+  num              Int          @unique @default(autoincrement()) // human id → PRD-00001
   name             String
   slug             String       @unique
   shortDescription String?
@@ -188,4 +195,33 @@ model BundleItem {
 
   @@index([bundleId])
   @@map("bundle_items")
+}
+
+// ---------- Coupons ----------
+
+model Coupon {
+  id         String     @id @default(cuid())
+  code       String     @unique // stored uppercase, entered at checkout
+  type       CouponType @default(PERCENT)
+  value      Float // percent (0–100) or fixed amount off
+  minSpend   Float? // minimum order subtotal to qualify
+  usageLimit Int? // max total redemptions (null = unlimited)
+  usedCount  Int        @default(0)
+  startsAt   DateTime? // becomes valid on this day (null = immediately)
+  expiresAt  DateTime? // last valid day (null = never)
+  active     Boolean    @default(true)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@map("coupons")
+}
+
+// ---------- Store settings (singleton row, id = "store") ----------
+
+model Setting {
+  id        String   @id @default("store")
+  data      Json     @default("{}") // { general: {...}, shipping: {...}, ... }
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
 }

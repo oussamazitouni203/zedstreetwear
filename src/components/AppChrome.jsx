@@ -6,7 +6,7 @@ import Footer from './Footer.jsx';
 import SearchOverlay from './SearchOverlay.jsx';
 import CartDrawer from './CartDrawer.jsx';
 
-export default function AppChrome({ children }) {
+export default function AppChrome({ children, social }) {
   const pathname = usePathname();
   const bare = pathname?.startsWith('/admin') || pathname?.startsWith('/login');
 
@@ -20,7 +20,7 @@ export default function AppChrome({ children }) {
     <>
       <Navbar />
       <div className={`page-shell${isHome ? ' page-shell--flush' : ''}`}>{children}</div>
-      <Footer />
+      <Footer social={social} />
       <SearchOverlay />
       <CartDrawer />
     </>

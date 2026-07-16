@@ -54,13 +54,16 @@ export default function Products({ products, search, onDelete, onBulkDelete }) {
               />
             </span>
             <div className="thumb">{p.principalImage ? <img src={p.principalImage} alt="" /> : null}</div>
-            <span className="cell-primary" style={{ fontWeight: 500 }}>{p.name}</span>
+            <span className="cell-primary" style={{ fontWeight: 500 }}>
+              <span className="row-id">{p.number}</span>
+              {p.name}
+            </span>
             <span data-label="Category" style={{ color: '#666' }}>{p.category}</span>
             <span data-label="Price" className="num">{money(p.price)}</span>
             <span data-label="Stock" className={`num${p.stock < 20 ? ' stock-low' : ''}`}>{p.stock}</span>
             <span data-label="Tag" className="tag-cell">{p.tag}</span>
             <div className="row-actions">
-              <Link className="adm-btn--small" href={`/admin/products/${p.id}/edit`}>Edit</Link>
+              <Link className="adm-btn--small" href={`/admin/products/${p.slug}/edit`}>Edit</Link>
               <button className="delete-btn" onClick={() => onDelete(p.id)} aria-label={`Delete ${p.name}`}>✕</button>
             </div>
           </div>

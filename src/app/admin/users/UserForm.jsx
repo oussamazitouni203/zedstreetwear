@@ -32,7 +32,7 @@ export default function UserForm({ user = null }) {
         password: form.password
       });
       router.refresh();
-      router.push(`/admin?tab=users&notice=${isEdit ? 'user-updated' : 'user-added'}`);
+      router.push(`/admin/users?notice=${isEdit ? 'user-updated' : 'user-added'}`);
     } catch (err) {
       setError(err?.message || 'Could not save the user.');
       setSaving(false);
@@ -41,7 +41,7 @@ export default function UserForm({ user = null }) {
 
   return (
     <div className="adm-form-page">
-      <Link href="/admin?tab=users" className="adm-form-page__back">← Back to users</Link>
+      <Link href="/admin/users" className="adm-form-page__back">← Back to users</Link>
 
       <form className="adm-form" onSubmit={submit}>
         <label>
@@ -70,7 +70,7 @@ export default function UserForm({ user = null }) {
           <button type="submit" className="adm-btn" disabled={saving}>
             {saving ? 'Saving…' : 'Save user'}
           </button>
-          <Link href="/admin?tab=users" className="adm-btn adm-btn--ghost">Cancel</Link>
+          <Link href="/admin/users" className="adm-btn adm-btn--ghost">Cancel</Link>
         </div>
       </form>
     </div>

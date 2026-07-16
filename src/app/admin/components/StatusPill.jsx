@@ -3,7 +3,8 @@ const CLASS = {
   Shipped: 'pill pill--shipped',
   Delivered: 'pill pill--delivered',
   Canceled: 'pill pill--canceled',
-  Abandoned: 'pill pill--abandoned'
+  Abandoned: 'pill pill--abandoned',
+  Returned: 'pill pill--returned'
 };
 
 export function StatusPill({ status }) {

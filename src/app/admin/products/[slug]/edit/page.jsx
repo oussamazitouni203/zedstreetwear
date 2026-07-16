@@ -8,14 +8,14 @@ export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Edit product — Admin' };
 
 export default async function EditProductPage({ params }) {
-  const { id } = await params;
+  const { slug } = await params;
 
   const session = await getCurrentSession();
   if (!session || session.role !== 'ADMIN') {
-    redirect(`/login?next=/admin/products/${id}/edit`);
+    redirect(`/login?next=/admin/products/${slug}/edit`);
   }
 
-  const { categories, attributes, product, pendingCount } = await getAdminFormData(id);
+  const { categories, attributes, product, pendingCount } = await getAdminFormData(slug);
   if (!product) notFound();
 
   return (

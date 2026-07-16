@@ -49,7 +49,7 @@ export default function BundleForm({ bundle = null, products = [] }) {
         productIds: form.productIds
       });
       router.refresh();
-      router.push(`/admin?tab=bundles&notice=${bundle ? 'bundle-updated' : 'bundle-added'}`);
+      router.push(`/admin/bundles?notice=${bundle ? 'bundle-updated' : 'bundle-added'}`);
     } catch (err) {
       setError(err?.message || 'Could not save the bundle.');
       setSaving(false);
@@ -58,7 +58,7 @@ export default function BundleForm({ bundle = null, products = [] }) {
 
   return (
     <div className="adm-form-page">
-      <Link href="/admin?tab=bundles" className="adm-form-page__back">← Back to bundles</Link>
+      <Link href="/admin/bundles" className="adm-form-page__back">← Back to bundles</Link>
 
       <form className="adm-form" onSubmit={submit}>
         <label>
@@ -123,7 +123,7 @@ export default function BundleForm({ bundle = null, products = [] }) {
           <button type="submit" className="adm-btn" disabled={saving}>
             {saving ? 'Saving…' : 'Save bundle'}
           </button>
-          <Link href="/admin?tab=bundles" className="adm-btn adm-btn--ghost">Cancel</Link>
+          <Link href="/admin/bundles" className="adm-btn adm-btn--ghost">Cancel</Link>
         </div>
       </form>
     </div>

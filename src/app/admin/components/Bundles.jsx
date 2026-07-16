@@ -38,7 +38,7 @@ export default function Bundles({ bundles, onToggle, onDiscount, onDelete, onBul
       </BulkBar>
 
       <div className="bundles-admin">
-        {bundles.map(b => {
+        {bundles.map((b, i) => {
           const price = Math.round(b.base * (1 - b.discount / 100));
           return (
             <div key={b.id} className={`bundle-admin-card${b.active ? '' : ' inactive'}${selected.has(b.id) ? ' selected' : ''}`}>
@@ -47,6 +47,7 @@ export default function Bundles({ bundles, onToggle, onDiscount, onDelete, onBul
               </label>
               <div className="bundle-admin-card__top">
                 <div>
+                  <span className="row-id">{i + 1}</span>
                   <h3>{b.name}</h3>
                   <p className="items">{b.items}</p>
                 </div>
@@ -73,7 +74,7 @@ export default function Bundles({ bundles, onToggle, onDiscount, onDelete, onBul
                 </div>
               </div>
               <div className="bundle-admin-card__actions">
-                <Link className="adm-btn--small" href={`/admin/bundles/${b.id}/edit`}>Edit</Link>
+                <Link className="adm-btn--small" href={`/admin/bundles/${b.slug}/edit`}>Edit</Link>
                 <button className="delete-btn" onClick={() => onDelete(b.id)} aria-label={`Delete ${b.name}`}>✕</button>
               </div>
             </div>

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { money } from '../data.js';
 import { StatusPill } from './StatusPill.jsx';
 
-const STATUSES = ['Pending', 'Shipped', 'Delivered', 'Canceled', 'Abandoned'];
+const STATUSES = ['Pending', 'Shipped', 'Delivered', 'Canceled', 'Abandoned', 'Returned'];
 
 export default function OrderModal({ order, busy, onClose, onSetStatus, onSetState, onDelete }) {
   useEffect(() => {
@@ -71,6 +71,11 @@ export default function OrderModal({ order, busy, onClose, onSetStatus, onSetSta
         </div>
 
         <div className="order-modal__foot">
+          {order.status !== 'Returned' && (
+            <button className="adm-btn adm-btn--ghost" disabled={busy} onClick={() => onSetStatus(order.id, 'Returned')}>
+              ↩ Mark as returned
+            </button>
+          )}
           {order.state === 'CURRENT' && (
             <>
               <button className="adm-btn adm-btn--ghost" disabled={busy} onClick={() => onSetState(order.id, 'ARCHIVED')}>

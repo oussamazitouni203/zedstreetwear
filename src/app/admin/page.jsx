@@ -1,31 +1,16 @@
 import { redirect } from 'next/navigation';
-import { getCurrentSession } from '../../lib/auth.js';
-import { getAdminData } from './queries.js';
-import AdminApp from './AdminApp.jsx';
+import AdminView from './AdminView.jsx';
 
 export const dynamic = 'force-dynamic';
 
-const TABS = ['dashboard', 'products', 'categories', 'attributes', 'orders', 'bundles', 'users'];
+const SECTIONS = [
+  'products', 'categories', 'attributes', 'bundles',
+  'orders', 'returns', 'coupons', 'analytics', 'banners', 'users', 'settings'
+];
 
 export default async function AdminPage({ searchParams }) {
-  const session = await getCurrentSession();
-  if (!session || session.role !== 'ADMIN') {
-    redirect('/login?next=/admin');
-  }
-
   const sp = await searchParams;
-  const initialView = TABS.includes(sp?.tab) ? sp.tab : 'dashboard';
-  const notice = typeof sp?.notice === 'string' ? sp.notice : null;
-
-  const data = await getAdminData();
-
-  return (
-    <AdminApp
-      initial={data}
-      adminName={session.name}
-      adminId={session.sub}
-      initialView={initialView}
-      notice={notice}
-    />
-  );
+  // Keep old ?tab= links working by redirecting them to the real route.
+  if (sp?.tab && SECTIONS.includes(sp.tab)) redirect(`/admin/${sp.tab}`);
+  return <AdminView view="dashboard" searchParams={searchParams} />;
 }

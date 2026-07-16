@@ -202,7 +202,7 @@ export default function ProductDetailClient({ product, related }) {
           <h2 className="section-title pdp__related-title">You may also like</h2>
           <div className="pdp__related-grid">
             {related.map(p => (
-              <Link key={p.id} href={`/shop/${p.id}`} className="related-card">
+              <Link key={p.id} href={`/shop/${p.slug}`} className="related-card">
                 <div className="related-card__media">
                   <ImageBox src={p.image} alt={p.name} label={`product — ${p.name}`} />
                 </div>

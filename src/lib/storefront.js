@@ -66,6 +66,19 @@ async function categoriesWithCounts() {
   }));
 }
 
+// ---------- Store settings ----------
+
+// Store-wide settings (social links, etc.) saved from the admin. Cached and
+// tagged 'storefront' so it refreshes when the admin saves.
+export const getStoreSettings = unstable_cache(
+  async () => {
+    const row = await prisma.setting.findUnique({ where: { id: 'store' } });
+    return row?.data && typeof row.data === 'object' ? row.data : {};
+  },
+  ['store-settings'],
+  { revalidate: 300, tags: ['storefront'] }
+);
+
 // ---------- Shop page ----------
 
 // Cached: the shop catalog changes only when admin edits products/categories,
@@ -85,9 +98,9 @@ export const getShopData = unstable_cache(
 // ---------- Product detail ----------
 
 export const getProduct = unstable_cache(
-  async (id) => {
+  async (slug) => {
     const p = await prisma.product.findUnique({
-      where: { id },
+      where: { slug },
       include: { categories: true, variations: { orderBy: { createdAt: 'asc' } } }
     });
     if (!p) return null;
@@ -191,12 +204,12 @@ export const getHomeData = unstable_cache(
 
   const bestSellers = bestSellersRaw.map(p => {
     const c = toCard(p);
-    return { id: c.id, name: c.name, category: c.categoryName, price: money(c.price), tag: c.tag, image: c.image };
+    return { id: c.id, slug: c.slug, name: c.name, category: c.categoryName, price: money(c.price), tag: c.tag, image: c.image };
   });
 
   const arrivals = arrivalsRaw.map(p => {
     const c = toCard(p);
-    return { id: c.id, name: c.name, price: money(c.price), image: c.image };
+    return { id: c.id, slug: c.slug, name: c.name, price: money(c.price), image: c.image };
   });
 
   const bundles = bundlesRaw.map(b => {
@@ -267,6 +280,6 @@ export async function searchProducts(query) {
   });
   return products.map(p => {
     const c = toCard(p);
-    return { id: c.id, name: c.name, category: c.categoryName, price: c.price, image: c.image, sizes: c.sizes };
+    return { id: c.id, slug: c.slug, name: c.name, category: c.categoryName, price: c.price, image: c.image, sizes: c.sizes };
   });
 }

@@ -294,13 +294,13 @@ export default function ShopPageClient({ products = [], categories = [] }) {
                 {pageItems.map(p => (
                   <div key={p.id} className="shop-card">
                     <div className="shop-card__media">
-                      <Link href={`/shop/${p.id}`} className="shop-card__link" aria-label={p.name}>
+                      <Link href={`/shop/${p.slug}`} className="shop-card__link" aria-label={p.name}>
                         <ImageBox src={p.image} alt={p.name} label={`product — ${p.name}`} />
                       </Link>
                       {p.tag && <span className="shop-card__tag">{p.tag}</span>}
                       <button className="shop-card__add" onClick={() => addItem(p, p.sizes[0])}>Add to cart</button>
                     </div>
-                    <Link href={`/shop/${p.id}`} className="shop-card__info">
+                    <Link href={`/shop/${p.slug}`} className="shop-card__info">
                       <p className="name">{p.name}</p>
                       <p className="price">${p.price}</p>
                     </Link>

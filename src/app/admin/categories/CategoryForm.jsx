@@ -42,7 +42,7 @@ export default function CategoryForm({ category = null, categories = [] }) {
         parentId: form.parentId || null
       });
       router.refresh();
-      router.push(`/admin?tab=categories&notice=${category ? 'category-updated' : 'category-added'}`);
+      router.push(`/admin/categories?notice=${category ? 'category-updated' : 'category-added'}`);
     } catch (err) {
       setError(err?.message || 'Could not save the category.');
       setSaving(false);
@@ -51,7 +51,7 @@ export default function CategoryForm({ category = null, categories = [] }) {
 
   return (
     <div className="adm-form-page">
-      <Link href="/admin?tab=categories" className="adm-form-page__back">← Back to categories</Link>
+      <Link href="/admin/categories" className="adm-form-page__back">← Back to categories</Link>
 
       <form className="adm-form" onSubmit={submit}>
         <label>
@@ -88,7 +88,7 @@ export default function CategoryForm({ category = null, categories = [] }) {
           <button type="submit" className="adm-btn" disabled={saving}>
             {saving ? 'Saving…' : 'Save category'}
           </button>
-          <Link href="/admin?tab=categories" className="adm-btn adm-btn--ghost">Cancel</Link>
+          <Link href="/admin/categories" className="adm-btn adm-btn--ghost">Cancel</Link>
         </div>
       </form>
     </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import './admin.css';
 import * as actions from './actions.js';
 import { logout } from '../login/actions.js';
@@ -12,17 +13,32 @@ import Bundles from './components/Bundles.jsx';
 import Users from './components/Users.jsx';
 import Categories from './components/Categories.jsx';
 import Attributes from './components/Attributes.jsx';
+import Coupons from './components/Coupons.jsx';
+import Analytics from './components/Analytics.jsx';
+import Settings from './components/Settings.jsx';
+import ReturnOrders from './components/ReturnOrders.jsx';
 import OrderModal from './components/OrderModal.jsx';
 import ConfirmDialog from './components/ConfirmDialog.jsx';
+import Placeholder from './components/Placeholder.jsx';
 
 const TITLES = {
   dashboard: 'Dashboard',
   products: 'Products',
   categories: 'Categories',
   attributes: 'Attributes',
-  orders: 'Orders',
   bundles: 'Bundles & discounts',
-  users: 'Users'
+  orders: 'Orders',
+  returns: 'Return Orders',
+  coupons: 'Coupons',
+  analytics: 'Analytics',
+  banners: 'Banners',
+  users: 'Users',
+  settings: 'Settings'
+};
+
+// Sections not yet built — shown as scaffolds so the hierarchy is complete.
+const PLACEHOLDERS = {
+  banners: 'Homepage banners — images, headings and links you can manage without code.'
 };
 
 const NOTICES = {
@@ -35,12 +51,16 @@ const NOTICES = {
   'user-added': 'User has been added.',
   'user-updated': 'User has been updated.',
   'attribute-added': 'Attribute has been added.',
-  'attribute-updated': 'Attribute has been updated.'
+  'attribute-updated': 'Attribute has been updated.',
+  'coupon-added': 'Coupon has been added.',
+  'coupon-updated': 'Coupon has been updated.'
 };
 
-export default function AdminApp({ initial, adminName, adminId, initialView = 'dashboard', notice = null }) {
-  const [view, setView] = useState(initialView);
+export default function AdminApp({ initial, adminName, adminEmail, adminId, initialView = 'dashboard', notice = null }) {
+  const router = useRouter();
+  const view = initialView; // each admin route renders one section
   const [search, setSearch] = useState('');
+  const [account, setAccount] = useState({ name: adminName, email: adminEmail });
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
 
@@ -66,19 +86,15 @@ export default function AdminApp({ initial, adminName, adminId, initialView = 'd
   const [users, setUsers] = useState(initial.users);
   const [categories, setCategories] = useState(initial.categories);
   const [attributes, setAttributes] = useState(initial.attributes);
+  const [coupons, setCoupons] = useState(initial.coupons);
+  const [settings, setSettings] = useState(initial.settings || {});
 
   const [busy, setBusy] = useState(false);
   const [activeOrderId, setActiveOrderId] = useState(null);
   const [confirming, setConfirming] = useState(null); // { title, message, confirmLabel, run }
 
-  const navigate = key => {
-    setView(key);
-    setSearch('');
-    // Keep the URL in sync with the current tab so a refresh stays put
-    // (instead of reverting to the ?tab= left over from the last edit).
-    const url = key === 'dashboard' ? '/admin' : `/admin?tab=${key}`;
-    window.history.replaceState(null, '', url);
-  };
+  // Navigate to another section as a real route.
+  const navigate = key => router.push(key === 'dashboard' ? '/admin' : `/admin/${key}`);
 
   const withBusy = async fn => {
     setBusy(true);
@@ -154,6 +170,38 @@ export default function AdminApp({ initial, adminName, adminId, initialView = 'd
       showToast('Attribute deleted.');
     });
 
+  const deleteCoupon = id =>
+    withBusy(async () => {
+      await actions.deleteCoupon(id);
+      setCoupons(cs => cs.filter(c => c.id !== id));
+      showToast('Coupon deleted.');
+    });
+
+  const saveSettings = (section, values) =>
+    withBusy(async () => {
+      const data = await actions.saveSettings(section, values);
+      setSettings(data);
+      showToast('Settings saved.');
+    });
+
+  const clearCache = () =>
+    withBusy(async () => {
+      await actions.clearStorefrontCache();
+      showToast('Storefront cache cleared.');
+    });
+
+  // Not wrapped in withBusy: rethrow so the account form can show inline errors.
+  const saveAccount = async values => {
+    setBusy(true);
+    try {
+      const res = await actions.updateAccount(values);
+      setAccount(res);
+      showToast('Account updated.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   // Deletes are routed through a confirmation dialog before running.
   const askDeleteProduct = id => {
     const p = products.find(x => x.id === id);
@@ -212,6 +260,16 @@ export default function AdminApp({ initial, adminName, adminId, initialView = 'd
       message: `Delete the “${a?.name ?? ''}” attribute? Existing products keep their saved variations.`,
       confirmLabel: 'Delete',
       run: () => deleteAttribute(id)
+    });
+  };
+
+  const askDeleteCoupon = id => {
+    const c = coupons.find(x => x.id === id);
+    setConfirming({
+      title: 'Delete coupon',
+      message: `Delete coupon “${c?.code ?? ''}”? This can’t be undone.`,
+      confirmLabel: 'Delete',
+      run: () => deleteCoupon(id)
     });
   };
 
@@ -290,6 +348,30 @@ export default function AdminApp({ initial, adminName, adminId, initialView = 'd
     });
   };
 
+  const bulkActiveCoupons = (ids, active) =>
+    withBusy(async () => {
+      const updated = await actions.setCouponsActive(ids, active);
+      const byId = new Map(updated.map(c => [c.id, c]));
+      setCoupons(cs => cs.map(c => byId.get(c.id) ?? c));
+      showToast(`${plural(ids.length, 'coupon')} ${active ? 'enabled' : 'disabled'}.`);
+    });
+
+  const bulkDeleteCoupons = ids => {
+    if (ids.length === 0) return;
+    setConfirming({
+      title: 'Delete coupons',
+      message: `Delete ${plural(ids.length, 'selected coupon')}? This can’t be undone.`,
+      confirmLabel: 'Delete',
+      run: () =>
+        withBusy(async () => {
+          await actions.deleteCoupons(ids);
+          const gone = new Set(ids);
+          setCoupons(cs => cs.filter(c => !gone.has(c.id)));
+          showToast(`${plural(ids.length, 'coupon')} deleted.`);
+        })
+    });
+  };
+
   const bulkDeleteUsers = ids => {
     if (ids.length === 0) return;
     setConfirming({
@@ -311,6 +393,12 @@ export default function AdminApp({ initial, adminName, adminId, initialView = 'd
       setOrders(await actions.setOrdersState(ids, state));
       const verb = state === 'ARCHIVED' ? 'archived' : state === 'TRASHED' ? 'moved to trash' : 'restored';
       showToast(`${plural(ids.length, 'order')} ${verb}.`);
+    });
+
+  const bulkOrdersStatus = (ids, status) =>
+    withBusy(async () => {
+      setOrders(await actions.setOrdersStatus(ids, status));
+      showToast(`${plural(ids.length, 'order')} marked as ${status.toLowerCase()}.`);
     });
 
   const bulkDeleteOrders = ids => {
@@ -337,7 +425,7 @@ export default function AdminApp({ initial, adminName, adminId, initialView = 'd
           {toast.message}
         </div>
       )}
-      <Sidebar view={view} onNavigate={navigate} pendingCount={pendingCount} adminName={adminName} />
+      <Sidebar view={view} pendingCount={pendingCount} adminName={account.name} />
       <main className="adm-main">
         <div className="adm-topbar">
           <h1>{TITLES[view]}</h1>
@@ -357,7 +445,13 @@ export default function AdminApp({ initial, adminName, adminId, initialView = 'd
           {view === 'dashboard' && (
             <Dashboard
               orders={orders.filter(o => o.state !== 'TRASHED')}
-              onViewOrders={() => navigate('orders')}
+              products={products}
+              categories={categories}
+              attributes={attributes}
+              bundles={bundles}
+              coupons={coupons}
+              users={users}
+              onNavigate={navigate}
             />
           )}
           {view === 'products' && (
@@ -390,7 +484,17 @@ export default function AdminApp({ initial, adminName, adminId, initialView = 'd
               search={search}
               onOpen={o => setActiveOrderId(o.id)}
               onBulkState={bulkOrdersState}
+              onBulkStatus={bulkOrdersStatus}
               onBulkDelete={bulkDeleteOrders}
+            />
+          )}
+          {view === 'returns' && (
+            <ReturnOrders
+              orders={orders}
+              search={search}
+              onOpen={o => setActiveOrderId(o.id)}
+              onBulkState={bulkOrdersState}
+              onBulkStatus={bulkOrdersStatus}
             />
           )}
           {view === 'bundles' && (
@@ -403,6 +507,28 @@ export default function AdminApp({ initial, adminName, adminId, initialView = 'd
               onBulkActive={bulkActiveBundles}
             />
           )}
+          {view === 'analytics' && (
+            <Analytics orders={orders} products={products} coupons={coupons} />
+          )}
+          {view === 'settings' && (
+            <Settings
+              settings={settings}
+              account={account}
+              onSave={saveSettings}
+              onSaveAccount={saveAccount}
+              onClearCache={clearCache}
+              busy={busy}
+            />
+          )}
+          {view === 'coupons' && (
+            <Coupons
+              coupons={coupons}
+              search={search}
+              onDelete={askDeleteCoupon}
+              onBulkDelete={bulkDeleteCoupons}
+              onBulkActive={bulkActiveCoupons}
+            />
+          )}
           {view === 'users' && (
             <Users
               users={users}
@@ -412,6 +538,7 @@ export default function AdminApp({ initial, adminName, adminId, initialView = 'd
               onBulkDelete={bulkDeleteUsers}
             />
           )}
+          {PLACEHOLDERS[view] && <Placeholder title={TITLES[view]} note={PLACEHOLDERS[view]} />}
         </div>
       </main>
       {activeOrder && (

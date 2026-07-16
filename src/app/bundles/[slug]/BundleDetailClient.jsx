@@ -59,7 +59,7 @@ export default function BundleDetailClient({ bundle }) {
             <p className="pdp__label">What&apos;s included</p>
             <div className="bundle-pdp__items">
               {bundle.products.map(p => (
-                <Link key={p.id} href={`/shop/${p.id}`} className="related-card">
+                <Link key={p.id} href={`/shop/${p.slug}`} className="related-card">
                   <div className="related-card__media">
                     <ImageBox src={p.image} alt={p.name} label={`product — ${p.name}`} />
                   </div>

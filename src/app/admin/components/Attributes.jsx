@@ -42,7 +42,7 @@ export default function Attributes({ attributes, search, onDelete, onBulkDelete 
           <span>Name</span><span>Values</span><span>Slug</span>
           <span style={{ justifySelf: 'end' }}>Actions</span>
         </div>
-        {filtered.map(a => (
+        {filtered.map((a, i) => (
           <div key={a.id} className={`adm-table__row attributes-grid${selected.has(a.id) ? ' selected' : ''}`}>
             <span className="sel-cell">
               <input
@@ -52,7 +52,10 @@ export default function Attributes({ attributes, search, onDelete, onBulkDelete 
                 aria-label={`Select ${a.name}`}
               />
             </span>
-            <span className="cell-primary" style={{ fontWeight: 500 }}>{a.name}</span>
+            <span className="cell-primary" style={{ fontWeight: 500 }}>
+              <span className="row-id">{i + 1}</span>
+              {a.name}
+            </span>
             <span data-label="Values" className="attr-values">
               {a.values.map(v => <span key={v} className="attr-chip">{v}</span>)}
             </span>

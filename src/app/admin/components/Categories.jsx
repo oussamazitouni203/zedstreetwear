@@ -42,7 +42,7 @@ export default function Categories({ categories, search, onDelete, onBulkDelete 
           <span /><span>Name</span><span>Slug</span><span>Parent</span>
           <span>Products</span><span style={{ justifySelf: 'end' }}>Actions</span>
         </div>
-        {filtered.map(c => (
+        {filtered.map((c, i) => (
           <div key={c.id} className={`adm-table__row categories-admin-grid${selected.has(c.id) ? ' selected' : ''}`}>
             <span className="sel-cell">
               <input
@@ -55,12 +55,15 @@ export default function Categories({ categories, search, onDelete, onBulkDelete 
             <div className="thumb">
               {c.image ? <img src={c.image} alt="" /> : null}
             </div>
-            <span className="cell-primary" style={{ fontWeight: 500 }}>{c.name}</span>
+            <span className="cell-primary" style={{ fontWeight: 500 }}>
+              <span className="row-id">{i + 1}</span>
+              {c.name}
+            </span>
             <span data-label="Slug" style={{ color: '#666' }}>{c.slug}</span>
             <span data-label="Parent" style={{ color: c.parentName ? '#111' : '#bbb' }}>{c.parentName || '—'}</span>
             <span data-label="Products" className="num">{c.productCount}</span>
             <div className="row-actions">
-              <Link className="adm-btn--small" href={`/admin/categories/${c.id}/edit`}>Edit</Link>
+              <Link className="adm-btn--small" href={`/admin/categories/${c.slug}/edit`}>Edit</Link>
               <button className="delete-btn" onClick={() => onDelete(c.id)} aria-label={`Delete ${c.name}`}>✕</button>
             </div>
           </div>

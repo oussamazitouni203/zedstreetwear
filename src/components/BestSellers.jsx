@@ -73,7 +73,7 @@ export default function BestSellers({ items = [] }) {
         <div ref={trackRef} className="slider-track" style={{ transform: `translateX(${offset()}px)` }}>
           {bestSellers.map(p => (
             <div key={p.id} className="product-card">
-              <Link href={`/shop/${p.id}`} className="product-card__media" style={{ display: 'block' }}>
+              <Link href={`/shop/${p.slug}`} className="product-card__media" style={{ display: 'block' }}>
                 <ImageBox src={p.image} alt={p.name} label={`product — ${p.name}`} />
                 <span className="product-card__tag">{p.tag}</span>
                 <div className="product-card__reveal">

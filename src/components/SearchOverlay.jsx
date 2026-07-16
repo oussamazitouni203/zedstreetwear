@@ -78,7 +78,7 @@ export default function SearchOverlay() {
                 results.map(p => (
                   <div key={p.id} className="search-result">
                     <Link
-                      href={`/shop/${p.id}`}
+                      href={`/shop/${p.slug}`}
                       className="search-result__link"
                       onClick={() => setSearchOpen(false)}
                     >

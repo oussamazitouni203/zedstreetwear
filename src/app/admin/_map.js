@@ -13,7 +13,8 @@ const STATUS_TO_UI = {
   SHIPPED: 'Shipped',
   DELIVERED: 'Delivered',
   CANCELED: 'Canceled',
-  ABANDONED: 'Abandoned'
+  ABANDONED: 'Abandoned',
+  RETURNED: 'Returned'
 };
 
 const UI_TO_STATUS = {
@@ -21,10 +22,11 @@ const UI_TO_STATUS = {
   Shipped: 'SHIPPED',
   Delivered: 'DELIVERED',
   Canceled: 'CANCELED',
-  Abandoned: 'ABANDONED'
+  Abandoned: 'ABANDONED',
+  Returned: 'RETURNED'
 };
 
-export const ORDER_STATUSES = ['Pending', 'Shipped', 'Delivered', 'Canceled', 'Abandoned'];
+export const ORDER_STATUSES = ['Pending', 'Shipped', 'Delivered', 'Canceled', 'Abandoned', 'Returned'];
 
 export const uiStatus = s => STATUS_TO_UI[s] ?? s;
 export const dbStatus = ui => UI_TO_STATUS[ui] ?? null;
@@ -35,10 +37,13 @@ const fmtDate = d =>
 const fmtJoined = d =>
   new Date(d).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 
+const pad5 = n => String(n).padStart(5, '0');
+
 export function mapProduct(p) {
   const cats = p.categories ?? [];
   return {
     id: p.id,
+    number: p.num != null ? `PRD-${pad5(p.num)}` : '',
     name: p.name,
     slug: p.slug,
     shortDescription: p.shortDescription ?? '',
@@ -71,10 +76,11 @@ export function mapOrder(o) {
   return {
     id: o.id, // cuid — used for keys + actions
     seq: o.seq,
-    number: `#${o.seq}`, // human-facing
+    number: `ORD-${pad5(o.seq)}`, // human-facing
     customer: o.customerName ?? o.user?.name ?? 'Guest',
     email: o.customerEmail ?? o.user?.email ?? '',
     date: fmtDate(o.createdAt),
+    createdAt: new Date(o.createdAt).toISOString(), // raw timestamp for analytics
     total: o.total,
     status: uiStatus(o.status),
     state: o.state, // CURRENT | ARCHIVED | TRASHED
@@ -120,6 +126,34 @@ export function mapCategory(c) {
     parentId: c.parentId ?? null,
     parentName: c.parent?.name ?? '',
     productCount: c._count?.products ?? 0
+  };
+}
+
+const asDay = d => (d ? new Date(d).toISOString().slice(0, 10) : '');
+
+// Derived lifecycle label used for the coupon status pill.
+export function couponStatus(c) {
+  if (!c.active) return 'Disabled';
+  const now = Date.now();
+  if (c.startsAt && new Date(c.startsAt).getTime() > now) return 'Scheduled';
+  if (c.expiresAt && new Date(c.expiresAt).getTime() < now) return 'Expired';
+  if (c.usageLimit != null && (c.usedCount ?? 0) >= c.usageLimit) return 'Used up';
+  return 'Active';
+}
+
+export function mapCoupon(c) {
+  return {
+    id: c.id,
+    code: c.code,
+    type: c.type, // 'PERCENT' | 'FIXED'
+    value: c.value,
+    minSpend: c.minSpend ?? null,
+    usageLimit: c.usageLimit ?? null,
+    usedCount: c.usedCount ?? 0,
+    startsAt: asDay(c.startsAt),
+    expiresAt: asDay(c.expiresAt),
+    active: c.active,
+    status: couponStatus(c)
   };
 }
 

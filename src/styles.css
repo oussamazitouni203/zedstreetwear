@@ -489,6 +489,10 @@ a.instagram__tile:hover img { transform: scale(1.05); }
 .footer__signup button:hover { color: #999; }
 .footer__col { display: flex; flex-direction: column; gap: 14px; font-size: 13px; }
 .footer__col-title { font-size: 12px; letter-spacing: 0.24em; text-transform: uppercase; color: #777; margin-bottom: 6px; }
+.footer__social { display: inline-flex; align-items: center; gap: 9px; }
+.footer__social svg { flex: 0 0 auto; opacity: 0.85; transition: opacity 0.2s; }
+.footer__social:hover svg { opacity: 1; }
+.footer__muted { color: #777; }
 .footer__legal {
   display: flex; justify-content: space-between; padding-top: 64px; padding-bottom: 32px;
   font-size: 12px; color: #777; letter-spacing: 0.08em;

@@ -2,8 +2,8 @@
 
 import { revalidateTag } from 'next/cache';
 import { prisma } from '../../lib/prisma.js';
-import { getCurrentSession, hashPassword } from '../../lib/auth.js';
-import { mapProduct, mapBundle, mapCategory, mapUser, mapAttribute, dbStatus, slugify } from './_map.js';
+import { getCurrentSession, hashPassword, verifyPassword, createUserSession } from '../../lib/auth.js';
+import { mapProduct, mapBundle, mapCategory, mapUser, mapAttribute, mapCoupon, dbStatus, slugify } from './_map.js';
 import { listOrders } from './queries.js';
 
 const bundleInclude = { items: { include: { product: true } } };
@@ -210,6 +210,15 @@ export async function setOrderState(id, state) {
   return listOrders();
 }
 
+export async function setOrdersStatus(ids, uiStatusValue) {
+  await requireAdmin();
+  const status = dbStatus(uiStatusValue);
+  if (!status) throw new Error('Invalid status.');
+  const list = Array.isArray(ids) ? ids : [];
+  await prisma.order.updateMany({ where: { id: { in: list } }, data: { status } });
+  return listOrders();
+}
+
 // Permanently remove a trashed order and close the gap: every order with a
 // higher seq is decremented by 1 so numbering stays contiguous.
 export async function deleteOrderForever(id) {
@@ -390,6 +399,41 @@ export async function saveUser(input) {
   return mapUser(user);
 }
 
+// Update the *current* admin's own profile — name, email and (optionally)
+// password. A password change requires the current password to confirm identity.
+export async function updateAccount(input) {
+  const session = await requireAdmin();
+  const userId = session.sub;
+
+  const name = String(input.name || '').trim();
+  const email = String(input.email || '').trim().toLowerCase();
+  if (!name) throw new Error('Name is required.');
+  if (!email || !email.includes('@')) throw new Error('A valid email is required.');
+
+  const me = await prisma.user.findUnique({ where: { id: userId } });
+  if (!me) throw new Error('Account not found.');
+
+  const clash = await prisma.user.findUnique({ where: { email } });
+  if (clash && clash.id !== userId) throw new Error('That email is already in use.');
+
+  const data = { name, email };
+
+  const newPassword = String(input.newPassword || '');
+  if (newPassword) {
+    const currentPassword = String(input.currentPassword || '');
+    if (!currentPassword) throw new Error('Enter your current password to set a new one.');
+    const ok = await verifyPassword(currentPassword, me.password);
+    if (!ok) throw new Error('Your current password is incorrect.');
+    if (newPassword.length < 6) throw new Error('New password must be at least 6 characters.');
+    data.password = await hashPassword(newPassword);
+  }
+
+  const updated = await prisma.user.update({ where: { id: userId }, data });
+  // Re-issue the session cookie so the sidebar/name reflect the change immediately.
+  await createUserSession(updated);
+  return { name: updated.name, email: updated.email };
+}
+
 export async function deleteUser(id) {
   const session = await requireAdmin();
   if (id === session.sub) throw new Error('You can’t delete your own account.');
@@ -466,6 +510,104 @@ export async function deleteUsers(ids) {
   }
   await prisma.user.deleteMany({ where: { id: { in: targets } } });
   return { ids: targets, skippedSelf: targets.length !== list.length };
+}
+
+// ---------- Settings (singleton) ----------
+
+const SETTINGS_ID = 'store';
+
+export async function saveSettings(section, values) {
+  await requireAdmin();
+  if (!section || typeof section !== 'string') throw new Error('Invalid settings section.');
+  const row = await prisma.setting.findUnique({ where: { id: SETTINGS_ID } });
+  const current = row?.data && typeof row.data === 'object' ? row.data : {};
+  const data = { ...current, [section]: values };
+  const saved = await prisma.setting.upsert({
+    where: { id: SETTINGS_ID },
+    create: { id: SETTINGS_ID, data },
+    update: { data }
+  });
+  revalidateStore(); // settings can affect the storefront (SEO, currency, etc.)
+  return saved.data;
+}
+
+export async function clearStorefrontCache() {
+  await requireAdmin();
+  revalidateStore();
+  return { ok: true };
+}
+
+// ---------- Coupons ----------
+
+// Parse a 'YYYY-MM-DD' form value into a Date (or null when blank).
+function parseDay(v) {
+  const s = String(v || '').trim();
+  if (!s) return null;
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+export async function saveCoupon(input) {
+  await requireAdmin();
+
+  const code = String(input.code || '').trim().toUpperCase().replace(/\s+/g, '');
+  if (!code) throw new Error('Coupon code is required.');
+  if (!/^[A-Z0-9._-]+$/.test(code)) throw new Error('Code can only use letters, numbers and - _ .');
+
+  const type = input.type === 'FIXED' ? 'FIXED' : 'PERCENT';
+  const value = Number(input.value);
+  if (!Number.isFinite(value) || value <= 0) throw new Error('Enter a discount value greater than 0.');
+  if (type === 'PERCENT' && value > 100) throw new Error('A percentage discount can’t exceed 100%.');
+
+  const minSpend = input.minSpend === '' || input.minSpend == null ? null : Number(input.minSpend);
+  if (minSpend != null && (!Number.isFinite(minSpend) || minSpend < 0)) {
+    throw new Error('Minimum spend must be 0 or more.');
+  }
+
+  const usageLimit = input.usageLimit === '' || input.usageLimit == null ? null : parseInt(input.usageLimit, 10);
+  if (usageLimit != null && (!Number.isInteger(usageLimit) || usageLimit < 1)) {
+    throw new Error('Usage limit must be a whole number of 1 or more.');
+  }
+
+  const startsAt = parseDay(input.startsAt);
+  const expiresAt = parseDay(input.expiresAt);
+  if (startsAt && expiresAt && expiresAt < startsAt) {
+    throw new Error('The expiry date can’t be before the start date.');
+  }
+
+  const clash = await prisma.coupon.findUnique({ where: { code } });
+  if (clash && clash.id !== input.id) throw new Error('A coupon with that code already exists.');
+
+  const data = { code, type, value, minSpend, usageLimit, startsAt, expiresAt, active: input.active !== false };
+
+  let coupon;
+  if (input.id) {
+    coupon = await prisma.coupon.update({ where: { id: input.id }, data });
+  } else {
+    coupon = await prisma.coupon.create({ data });
+  }
+  return mapCoupon(coupon);
+}
+
+export async function deleteCoupon(id) {
+  await requireAdmin();
+  await prisma.coupon.delete({ where: { id } });
+  return { id };
+}
+
+export async function deleteCoupons(ids) {
+  await requireAdmin();
+  const list = Array.isArray(ids) ? ids : [];
+  await prisma.coupon.deleteMany({ where: { id: { in: list } } });
+  return { ids: list };
+}
+
+export async function setCouponsActive(ids, active) {
+  await requireAdmin();
+  const list = Array.isArray(ids) ? ids : [];
+  await prisma.coupon.updateMany({ where: { id: { in: list } }, data: { active: Boolean(active) } });
+  const rows = await prisma.coupon.findMany({ where: { id: { in: list } } });
+  return rows.map(mapCoupon);
 }
 
 // ---------- Categories ----------

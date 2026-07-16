@@ -36,7 +36,7 @@ export function NewArrivals({ arrivals = [] }) {
       </div>
       <div className="arrivals__grid">
         {arrivals.map(item => (
-          <Link key={item.id} href={`/shop/${item.id}`}>
+          <Link key={item.id} href={`/shop/${item.slug}`}>
             <div className="arrival-card__media">
               <ImageBox src={item.image} alt={item.name} label={`new arrival — ${item.name}`} />
             </div>

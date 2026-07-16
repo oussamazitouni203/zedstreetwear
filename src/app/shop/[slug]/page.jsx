@@ -5,16 +5,16 @@ import ProductDetailClient from './ProductDetailClient.jsx';
 export const revalidate = 300;
 
 export async function generateMetadata({ params }) {
-  const { id } = await params;
-  const product = await getProduct(id);
+  const { slug } = await params;
+  const product = await getProduct(slug);
   return {
     title: product ? `${product.name} — The Bespoke` : 'Not found — The Bespoke'
   };
 }
 
 export default async function ProductPage({ params }) {
-  const { id } = await params;
-  const product = await getProduct(id);
+  const { slug } = await params;
+  const product = await getProduct(slug);
   if (!product) notFound();
 
   const related = await getRelated(product, 4);

@@ -46,7 +46,7 @@ export default function Users({ users, search, currentUserId, onDelete, onBulkDe
           <span /><span>Name</span><span>Email</span><span>Role</span>
           <span>Joined</span><span style={{ justifySelf: 'end' }}>Actions</span>
         </div>
-        {filtered.map(u => (
+        {filtered.map((u, i) => (
           <div key={u.id} className={`adm-table__row users-grid${selected.has(u.id) ? ' selected' : ''}`}>
             <span className="sel-cell">
               <input
@@ -59,6 +59,7 @@ export default function Users({ users, search, currentUserId, onDelete, onBulkDe
             </span>
             <div className="customer-avatar">{initials(u.name)}</div>
             <span className="cell-primary" style={{ fontWeight: 500 }}>
+              <span className="row-id">{i + 1}</span>
               {u.name}
               {u.id === currentUserId && <span className="you-badge">You</span>}
             </span>

@@ -8,14 +8,14 @@ export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Edit category — Admin' };
 
 export default async function EditCategoryPage({ params }) {
-  const { id } = await params;
+  const { slug } = await params;
 
   const session = await getCurrentSession();
   if (!session || session.role !== 'ADMIN') {
-    redirect(`/login?next=/admin/categories/${id}/edit`);
+    redirect(`/login?next=/admin/categories/${slug}/edit`);
   }
 
-  const { categories, category, pendingCount } = await getCategoryFormData(id);
+  const { categories, category, pendingCount } = await getCategoryFormData(slug);
   if (!category) notFound();
 
   return (

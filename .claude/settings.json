@@ -18,7 +18,19 @@
       "Bash(npx next *)",
       "Bash(node -e 'const{PrismaClient}=require\\('\\\\''@prisma/client'\\\\''\\);const p=new PrismaClient\\(\\);p.attribute.findMany\\(\\).then\\(a=>{console.log\\('\\\\''attributes:'\\\\'',a.map\\(x=>x.name+'\\\\'':['\\\\''+x.values.join\\('\\\\'','\\\\''\\)+'\\\\'']'\\\\''\\).join\\('\\\\'' | '\\\\''\\)\\);return p.$disconnect\\(\\)}\\)')",
       "Bash(node -e 'const{PrismaClient}=require\\('\\\\''@prisma/client'\\\\''\\);const p=new PrismaClient\\(\\);p.$queryRaw`SELECT 1`.then\\(\\(\\)=>{console.log\\('\\\\''warm'\\\\''\\);process.exit\\(0\\)}\\).catch\\(\\(\\)=>process.exit\\(1\\)\\)')",
-      "Bash(node -e 'const{PrismaClient}=require\\('\\\\''@prisma/client'\\\\''\\);const p=new PrismaClient\\(\\);p.attribute.findMany\\(\\).then\\(a=>{console.log\\('\\\\''attributes:'\\\\'',a.map\\(x=>x.name\\).join\\('\\\\'', '\\\\''\\)\\);return p.$disconnect\\(\\)}\\)')"
+      "Bash(node -e 'const{PrismaClient}=require\\('\\\\''@prisma/client'\\\\''\\);const p=new PrismaClient\\(\\);p.attribute.findMany\\(\\).then\\(a=>{console.log\\('\\\\''attributes:'\\\\'',a.map\\(x=>x.name\\).join\\('\\\\'', '\\\\''\\)\\);return p.$disconnect\\(\\)}\\)')",
+      "Bash(node -e 'const{PrismaClient}=require\\('\\\\''@prisma/client'\\\\''\\);const p=new PrismaClient\\(\\);p.product.findMany\\({select:{num:true,name:true},orderBy:{num:'\\\\''asc'\\\\''},take:3}\\).then\\(r=>{console.log\\(r.map\\(x=>'\\\\''PRD-'\\\\''+String\\(x.num\\).padStart\\(5,'\\\\''0'\\\\''\\)+'\\\\'' '\\\\''+x.name\\).join\\('\\\\'' | '\\\\''\\)\\);return p.$disconnect\\(\\)}\\)')",
+      "Bash(curl -s \"http://localhost:3153/shop\" -o /tmp/shop.html)",
+      "Bash(grep -oE 'shop-card__media[^>]*>.{0,120}' /tmp/shop.html)",
+      "Bash(curl -s \"http://localhost:3153/shop\")",
+      "Bash(grep -oE '.{0,10}shop-card__info.{0,80}')",
+      "Bash(node -e 'const{PrismaClient}=require\\('\\\\''@prisma/client'\\\\''\\);const p=new PrismaClient\\(\\);p.product.findMany\\({select:{name:true,slug:true},orderBy:{createdAt:'\\\\''desc'\\\\''},take:5}\\).then\\(r=>{r.forEach\\(x=>console.log\\(JSON.stringify\\(x.slug\\),'\\\\''-'\\\\'',x.name\\)\\);return p.$disconnect\\(\\)}\\)')",
+      "Bash(curl -s \"http://localhost:3153/shop/heavyweight-hoodie\")",
+      "Bash(curl -s \"http://localhost:3153/\")",
+      "Bash(awk '{print $1}')"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
     ]
   }
 }
