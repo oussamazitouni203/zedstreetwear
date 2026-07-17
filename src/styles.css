@@ -1006,3 +1006,16 @@ a.instagram__tile:hover img { transform: scale(1.05); }
 @media (max-width: 640px) {
   .checkout__row { grid-template-columns: 1fr; }
 }
+
+/* checkout — shipping method selection */
+.checkout__ship-methods { display: flex; flex-direction: column; gap: 10px; }
+.checkout__ship-method {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+  border: 1px solid #ddd; border-radius: 10px; cursor: pointer; transition: border-color 0.15s, background 0.15s;
+}
+.checkout__ship-method:hover { border-color: #999; }
+.checkout__ship-method.on { border-color: #111; background: #fafafa; }
+.checkout__ship-method input { margin: 0; accent-color: #111; }
+.checkout__ship-method__title { flex: 1; font-size: 14px; font-weight: 500; }
+.checkout__ship-method__cost { font-size: 14px; font-weight: 600; }
+.checkout__ship-loading { font-size: 13px; color: #888; padding: 6px 0; }

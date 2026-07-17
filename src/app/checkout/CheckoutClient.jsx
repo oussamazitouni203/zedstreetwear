@@ -4,13 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useStore } from '../../components/StoreProvider.jsx';
 import ImageBox from '../../components/ImageBox.jsx';
-import { createOrder } from './actions.js';
+import { createOrder, getShippingOptions } from './actions.js';
+import { WILAYAS } from '../../lib/regions.js';
 
+// Fallback rates used only when no shipping zones are configured in admin.
 const FREE_SHIPPING_OVER = 100;
 const SHIPPING_FLAT = 8;
-
-// Algerian wilayas — add the rest here later.
-const STATES = ['Adrar', 'Chlef', 'Algiers'];
 
 // Custom, site-styled dropdown (native <select> menus can't be themed).
 function StateDropdown({ value, onChange, options, invalid }) {
@@ -74,8 +73,46 @@ export default function CheckoutClient() {
   const [stateError, setStateError] = useState(false);
   const [placing, setPlacing] = useState(false);
 
-  const shipping = subtotal >= FREE_SHIPPING_OVER || subtotal === 0 ? 0 : SHIPPING_FLAT;
-  const total = subtotal + shipping;
+  // Shipping options for the chosen wilaya (from admin-configured zones).
+  const [shipData, setShipData] = useState(null); // { configured, options } | null
+  const [shipMethodId, setShipMethodId] = useState('');
+  const [loadingShip, setLoadingShip] = useState(false);
+
+  useEffect(() => {
+    if (!state || count === 0) {
+      setShipData(null);
+      return;
+    }
+    let cancelled = false;
+    setLoadingShip(true);
+    getShippingOptions({ region: state, subtotal, items: items.map(i => ({ id: i.id, qty: i.qty })) })
+      .then(res => {
+        if (cancelled) return;
+        setShipData(res);
+        const opts = res?.options || [];
+        const cheapest = [...opts].sort((a, b) => a.cost - b.cost)[0];
+        setShipMethodId(cheapest ? cheapest.id : '');
+      })
+      .catch(() => !cancelled && setShipData({ configured: false, options: [] }))
+      .finally(() => !cancelled && setLoadingShip(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [state, subtotal, count]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const configured = shipData?.configured;
+  const options = shipData?.options || [];
+  const selected = options.find(o => o.id === shipMethodId) || null;
+
+  // Resolve the shipping cost: unknown until a wilaya is chosen; admin zones win;
+  // otherwise fall back to the legacy flat/free logic.
+  let shipping = null;
+  if (state) {
+    if (configured) shipping = options.length ? (selected || options[0]).cost : null;
+    else shipping = subtotal >= FREE_SHIPPING_OVER || subtotal === 0 ? 0 : SHIPPING_FLAT;
+  }
+  const noService = configured && options.length === 0;
+  const total = subtotal + (shipping || 0);
 
   const placeOrder = async e => {
     e.preventDefault();
@@ -83,9 +120,22 @@ export default function CheckoutClient() {
       setStateError(true);
       return;
     }
+    if (noService) {
+      alert('Sorry, we don’t ship to your area yet.');
+      return;
+    }
+    const chosen = selected || options[0] || null;
+    const shipCost = shipping == null ? 0 : shipping;
     setPlacing(true);
     try {
-      const placed = await createOrder({ items, total, customerName: name });
+      const placed = await createOrder({
+        items,
+        total: subtotal + shipCost,
+        customerName: name,
+        shippingRegion: state,
+        shippingMethod: chosen ? chosen.title : null,
+        shippingCost: shipCost
+      });
       setOrder(placed);
       clearCart();
     } catch (err) {
@@ -163,7 +213,7 @@ export default function CheckoutClient() {
                 <label>State</label>
                 <StateDropdown
                   value={state}
-                  options={STATES}
+                  options={WILAYAS}
                   invalid={stateError}
                   onChange={v => {
                     setState(v);
@@ -178,6 +228,32 @@ export default function CheckoutClient() {
               <input id="co-phone" type="tel" placeholder="+213 ..." required />
             </div>
           </section>
+
+          {state && configured && (
+            <section className="checkout__section">
+              <h2 className="checkout__section-title">Shipping method</h2>
+              {loadingShip ? (
+                <p className="checkout__ship-loading">Checking rates…</p>
+              ) : options.length === 0 ? (
+                <p className="checkout__error">Sorry, we don’t ship to {state} yet.</p>
+              ) : (
+                <div className="checkout__ship-methods">
+                  {options.map(o => (
+                    <label key={o.id} className={`checkout__ship-method${shipMethodId === o.id ? ' on' : ''}`}>
+                      <input
+                        type="radio"
+                        name="shipmethod"
+                        checked={shipMethodId === o.id}
+                        onChange={() => setShipMethodId(o.id)}
+                      />
+                      <span className="checkout__ship-method__title">{o.title}</span>
+                      <span className="checkout__ship-method__cost">{o.cost === 0 ? 'Free' : `$${o.cost}`}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
         </div>
 
         <aside className="checkout__summary">
@@ -207,16 +283,16 @@ export default function CheckoutClient() {
             </div>
             <div className="checkout__line">
               <span>Shipping</span>
-              <span>{shipping === 0 ? 'Free' : `$${shipping}`}</span>
+              <span>{shipping == null ? '—' : shipping === 0 ? 'Free' : `$${shipping}`}</span>
             </div>
             <div className="checkout__line checkout__line--total">
               <span>Total</span>
-              <span>${total}</span>
+              <span>${shipping == null ? subtotal : total}</span>
             </div>
           </div>
 
-          <button type="submit" className="btn btn--black checkout__place" disabled={placing}>
-            {placing ? 'Placing order…' : 'Place order'}
+          <button type="submit" className="btn btn--black checkout__place" disabled={placing || loadingShip || noService}>
+            {placing ? 'Placing order…' : noService ? 'Unavailable in your area' : 'Place order'}
           </button>
           <p className="checkout__disclaimer">This is a demo store — no payment is taken and no order is shipped.</p>
         </aside>

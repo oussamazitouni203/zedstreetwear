@@ -42,6 +42,12 @@ enum CouponType {
   FIXED
 }
 
+enum ShippingMethodType {
+  FLAT_RATE
+  FREE_SHIPPING
+  LOCAL_PICKUP
+}
+
 // ---------- Users (replaces "customers") ----------
 
 model User {
@@ -96,6 +102,8 @@ model Product {
   color            String?
   stock            Int          @default(0)
   tag              String?
+  shippingClassId  String?
+  shippingClass    ShippingClass? @relation(fields: [shippingClassId], references: [id], onDelete: SetNull)
   // Variable products: attribute definitions [{ name, values: [] }].
   attributes       Json?
   // Structured product details shown on the PDP: [{ label, value }].
@@ -106,6 +114,7 @@ model Product {
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
+  @@index([shippingClassId])
   @@map("products")
 }
 
@@ -147,6 +156,9 @@ model Order {
   user          User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   items         OrderItem[]
   total     Float
+  shippingRegion String? // wilaya chosen at checkout
+  shippingMethod String? // method title snapshot, e.g. "Flat rate"
+  shippingCost   Float?  // shipping charged (null = legacy/unknown)
   status    OrderStatus @default(PENDING)
   state     OrderState  @default(CURRENT)
   createdAt DateTime    @default(now())
@@ -214,6 +226,55 @@ model Coupon {
   updatedAt  DateTime   @updatedAt
 
   @@map("coupons")
+}
+
+// ---------- Shipping (WooCommerce-style zones, methods, classes) ----------
+
+// A geographic zone: a set of regions (wilayas) with its own shipping methods.
+// Orders match the first zone (by `order`) that covers the destination region;
+// the `isDefault` zone is the "Rest of the world" fallback (no regions).
+model ShippingZone {
+  id        String           @id @default(cuid())
+  name      String
+  regions   String[] // wilaya names this zone covers
+  isDefault Boolean          @default(false)
+  order     Int              @default(0) // lower = matched first
+  methods   ShippingMethod[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@map("shipping_zones")
+}
+
+// A shipping option inside a zone (Flat rate / Free shipping / Local pickup).
+model ShippingMethod {
+  id             String             @id @default(cuid())
+  zoneId         String
+  zone           ShippingZone       @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  type           ShippingMethodType @default(FLAT_RATE)
+  title          String
+  enabled        Boolean            @default(true)
+  cost           Float              @default(0) // flat-rate base / local-pickup fee
+  minAmount      Float? // free shipping: minimum order subtotal required
+  requiresCoupon Boolean            @default(false) // free shipping: requires a free-shipping coupon
+  classCosts     Json? // flat rate per-class surcharge: { [shippingClassId]: number }
+  order          Int                @default(0)
+  createdAt      DateTime           @default(now())
+
+  @@index([zoneId])
+  @@map("shipping_methods")
+}
+
+// Groups products so flat-rate methods can charge different amounts per class.
+model ShippingClass {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+
+  @@map("shipping_classes")
 }
 
 // ---------- Store settings (singleton row, id = "store") ----------

@@ -25,7 +25,8 @@ const NAV = [
     items: [
       { key: 'orders', label: 'Orders' },
       { key: 'returns', label: 'Return Orders' },
-      { key: 'coupons', label: 'Coupons' }
+      { key: 'coupons', label: 'Coupons' },
+      { key: 'shipping', label: 'Shipping' }
     ]
   },
   { type: 'item', key: 'analytics', label: 'Analytics', icon: 'analytics' },
@@ -80,6 +81,8 @@ export function Icon({ name }) {
       return <svg {...p}><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1-2 2H5a2 2 0 0 1-2-2 2 2 0 0 0 0-4Z" /><line x1="14" y1="7" x2="14" y2="17" strokeDasharray="1.5 3" /></svg>;
     case 'banners':
       return <svg {...p}><line x1="5" y1="21" x2="5" y2="4" /><path d="M5 4h13l-2.5 3.5L18 11H5Z" /></svg>;
+    case 'shipping':
+      return <svg {...p}><path d="M1 3h14v13H1z" /><path d="M15 8h4l3 3v5h-7z" /><circle cx="6" cy="18.5" r="1.8" /><circle cx="18" cy="18.5" r="1.8" /></svg>;
     case 'menu':
       return <svg {...p}><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></svg>;
     default:

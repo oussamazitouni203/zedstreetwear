@@ -3,9 +3,55 @@
 import { prisma } from '../../lib/prisma.js';
 import { getCurrentSession } from '../../lib/auth.js';
 
+const METHOD_LABELS = { FLAT_RATE: 'Flat rate', FREE_SHIPPING: 'Free shipping', LOCAL_PICKUP: 'Local pickup' };
+
+// Compute the shipping methods available for a destination wilaya, WooCommerce-style:
+// find the first zone that covers the region (else the fallback zone), then price
+// each enabled method — flat rate adds per-shipping-class surcharges, free shipping
+// respects its minimum-order requirement.
+export async function getShippingOptions({ region, subtotal = 0, items = [] } = {}) {
+  const zones = await prisma.shippingZone.findMany({
+    include: { methods: { where: { enabled: true }, orderBy: { order: 'asc' } } },
+    orderBy: { order: 'asc' }
+  });
+  if (zones.length === 0) return { configured: false, options: [] };
+
+  const zone =
+    zones.find(z => !z.isDefault && Array.isArray(z.regions) && z.regions.includes(region)) ||
+    zones.find(z => z.isDefault) ||
+    null;
+  if (!zone) return { configured: true, options: [], zoneName: null };
+
+  // Which shipping classes are present in the cart (for flat-rate surcharges)?
+  const ids = (Array.isArray(items) ? items : []).map(i => i.id).filter(Boolean);
+  let presentClasses = new Set();
+  if (ids.length) {
+    const rows = await prisma.product.findMany({ where: { id: { in: ids } }, select: { shippingClassId: true } });
+    presentClasses = new Set(rows.map(r => r.shippingClassId).filter(Boolean));
+  }
+
+  const sub = Number(subtotal) || 0;
+  const options = [];
+  for (const m of zone.methods) {
+    if (m.type === 'FREE_SHIPPING') {
+      if (m.minAmount != null && sub < m.minAmount) continue; // minimum not met
+      if (m.requiresCoupon) continue; // coupon-gated free shipping not offered here
+      options.push({ id: m.id, type: m.type, title: m.title || METHOD_LABELS[m.type], cost: 0 });
+      continue;
+    }
+    let cost = m.cost ?? 0;
+    if (m.type === 'FLAT_RATE' && m.classCosts && typeof m.classCosts === 'object') {
+      for (const classId of presentClasses) cost += Number(m.classCosts[classId]) || 0;
+    }
+    options.push({ id: m.id, type: m.type, title: m.title || METHOD_LABELS[m.type], cost: Math.max(0, cost) });
+  }
+
+  return { configured: true, zoneName: zone.name, options };
+}
+
 // Persist a real order from the cart. Links line items to products when the
 // id still exists, snapshots name/price, and decrements stock best-effort.
-export async function createOrder({ items, total, customerName, customerEmail }) {
+export async function createOrder({ items, total, customerName, customerEmail, shippingRegion, shippingMethod, shippingCost }) {
   const list = Array.isArray(items) ? items : [];
   if (list.length === 0) {
     throw new Error('Cart is empty.');
@@ -30,6 +76,9 @@ export async function createOrder({ items, total, customerName, customerEmail })
       customerName: String(customerName || '').trim() || null,
       customerEmail: String(customerEmail || '').trim() || null,
       total: Number(total) || 0,
+      shippingRegion: String(shippingRegion || '').trim() || null,
+      shippingMethod: String(shippingMethod || '').trim() || null,
+      shippingCost: shippingCost == null || shippingCost === '' ? null : Number(shippingCost),
       status: 'PENDING',
       state: 'CURRENT',
       userId: session?.sub ?? null,

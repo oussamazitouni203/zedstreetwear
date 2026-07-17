@@ -3,7 +3,7 @@
 import { revalidateTag } from 'next/cache';
 import { prisma } from '../../lib/prisma.js';
 import { getCurrentSession, hashPassword, verifyPassword, createUserSession } from '../../lib/auth.js';
-import { mapProduct, mapBundle, mapCategory, mapUser, mapAttribute, mapCoupon, dbStatus, slugify } from './_map.js';
+import { mapProduct, mapBundle, mapCategory, mapUser, mapAttribute, mapCoupon, mapShippingZone, mapShippingClass, shippingMethodLabel, dbStatus, slugify } from './_map.js';
 import { listOrders } from './queries.js';
 
 const bundleInclude = { items: { include: { product: true } } };
@@ -106,6 +106,7 @@ export async function saveProduct(input) {
     principalImage: String(input.principalImage || '').trim() || null,
     gallery: normalizeGallery(input.gallery),
     tag: String(input.tag || '').trim() || null,
+    shippingClassId: String(input.shippingClassId || '').trim() || null,
     attributes: isVariable ? attributes : null,
     additionalInfo
   };
@@ -608,6 +609,136 @@ export async function setCouponsActive(ids, active) {
   await prisma.coupon.updateMany({ where: { id: { in: list } }, data: { active: Boolean(active) } });
   const rows = await prisma.coupon.findMany({ where: { id: { in: list } } });
   return rows.map(mapCoupon);
+}
+
+// ---------- Shipping ----------
+
+const zoneInclude = { methods: true };
+
+async function loadZone(id) {
+  const z = await prisma.shippingZone.findUnique({ where: { id }, include: zoneInclude });
+  return z ? mapShippingZone(z) : null;
+}
+
+export async function saveShippingZone(input) {
+  await requireAdmin();
+  const name = String(input.name || '').trim();
+  if (!name) throw new Error('Zone name is required.');
+  const isDefault = !!input.isDefault;
+  const regions = isDefault ? [] : (Array.isArray(input.regions) ? [...new Set(input.regions.map(String))] : []);
+
+  // Only one fallback ("Rest of Algeria") zone may exist at a time.
+  if (isDefault) {
+    await prisma.shippingZone.updateMany({
+      where: { isDefault: true, ...(input.id ? { NOT: { id: input.id } } : {}) },
+      data: { isDefault: false }
+    });
+  }
+
+  const data = { name, regions, isDefault };
+  let zone;
+  if (input.id) {
+    zone = await prisma.shippingZone.update({ where: { id: input.id }, data, include: zoneInclude });
+  } else {
+    const count = await prisma.shippingZone.count();
+    zone = await prisma.shippingZone.create({ data: { ...data, order: count }, include: zoneInclude });
+  }
+  revalidateStore();
+  return mapShippingZone(zone);
+}
+
+export async function deleteShippingZone(id) {
+  await requireAdmin();
+  await prisma.shippingZone.delete({ where: { id } });
+  revalidateStore();
+  return { id };
+}
+
+export async function saveShippingMethod(input) {
+  await requireAdmin();
+  const zoneId = String(input.zoneId || '');
+  if (!zoneId) throw new Error('Missing shipping zone.');
+
+  const type = ['FLAT_RATE', 'FREE_SHIPPING', 'LOCAL_PICKUP'].includes(input.type) ? input.type : 'FLAT_RATE';
+  const title = String(input.title || '').trim() || shippingMethodLabel(type);
+
+  const cost = type === 'FREE_SHIPPING' ? 0 : (input.cost === '' || input.cost == null ? 0 : Number(input.cost));
+  if (!Number.isFinite(cost) || cost < 0) throw new Error('Cost must be 0 or more.');
+
+  const minAmount =
+    type === 'FREE_SHIPPING' && input.minAmount !== '' && input.minAmount != null ? Number(input.minAmount) : null;
+  if (minAmount != null && (!Number.isFinite(minAmount) || minAmount < 0)) {
+    throw new Error('Minimum order must be 0 or more.');
+  }
+  const requiresCoupon = type === 'FREE_SHIPPING' ? !!input.requiresCoupon : false;
+
+  // Per-class surcharges apply to flat rate only; keep non-zero entries.
+  let classCosts = null;
+  if (type === 'FLAT_RATE' && input.classCosts && typeof input.classCosts === 'object') {
+    const out = {};
+    for (const [k, v] of Object.entries(input.classCosts)) {
+      const n = Number(v);
+      if (Number.isFinite(n) && n !== 0) out[k] = n;
+    }
+    if (Object.keys(out).length) classCosts = out;
+  }
+
+  const data = { zoneId, type, title, enabled: input.enabled !== false, cost, minAmount, requiresCoupon, classCosts };
+  if (input.id) {
+    await prisma.shippingMethod.update({ where: { id: input.id }, data });
+  } else {
+    const count = await prisma.shippingMethod.count({ where: { zoneId } });
+    await prisma.shippingMethod.create({ data: { ...data, order: count } });
+  }
+  revalidateStore();
+  return loadZone(zoneId);
+}
+
+export async function deleteShippingMethod(id) {
+  await requireAdmin();
+  const m = await prisma.shippingMethod.findUnique({ where: { id }, select: { zoneId: true } });
+  await prisma.shippingMethod.delete({ where: { id } });
+  revalidateStore();
+  return m ? loadZone(m.zoneId) : null;
+}
+
+export async function toggleShippingMethod(id) {
+  await requireAdmin();
+  const m = await prisma.shippingMethod.findUnique({ where: { id } });
+  if (!m) throw new Error('Method not found.');
+  await prisma.shippingMethod.update({ where: { id }, data: { enabled: !m.enabled } });
+  revalidateStore();
+  return loadZone(m.zoneId);
+}
+
+export async function saveShippingClass(input) {
+  await requireAdmin();
+  const name = String(input.name || '').trim();
+  if (!name) throw new Error('Class name is required.');
+  const slug = slugify(input.slug || name) || 'class';
+
+  const clash = await prisma.shippingClass.findUnique({ where: { slug } });
+  if (clash && clash.id !== input.id) throw new Error('A shipping class with that slug already exists.');
+
+  const description = String(input.description || '').trim() || null;
+  const data = { name, slug, description };
+  const withCount = { include: { _count: { select: { products: true } } } };
+
+  let cls;
+  if (input.id) {
+    cls = await prisma.shippingClass.update({ where: { id: input.id }, data, ...withCount });
+  } else {
+    cls = await prisma.shippingClass.create({ data, ...withCount });
+  }
+  revalidateStore();
+  return mapShippingClass(cls);
+}
+
+export async function deleteShippingClass(id) {
+  await requireAdmin();
+  await prisma.shippingClass.delete({ where: { id } });
+  revalidateStore();
+  return { id };
 }
 
 // ---------- Categories ----------

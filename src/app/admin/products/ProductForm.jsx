@@ -32,13 +32,14 @@ const EMPTY = {
   categoryIds: [],
   stock: 0,
   tag: '',
+  shippingClassId: '',
   sizes: '',
   color: '',
   principalImage: '',
   gallery: ''
 };
 
-export default function ProductForm({ product = null, categories = [], globalAttributes = [] }) {
+export default function ProductForm({ product = null, categories = [], globalAttributes = [], shippingClasses = [] }) {
   const router = useRouter();
 
   const [form, setForm] = useState(() =>
@@ -208,6 +209,15 @@ export default function ProductForm({ product = null, categories = [], globalAtt
               value={form.tag}
               onChange={v => set('tag', v)}
               options={TAGS.map(t => ({ value: t, label: t || 'None' }))}
+            />
+          </div>
+
+          <div className="adm-form__field">
+            <p className="adm-form__label">Shipping class</p>
+            <Select
+              value={form.shippingClassId || ''}
+              onChange={v => set('shippingClassId', v)}
+              options={[{ value: '', label: 'No shipping class' }, ...shippingClasses.map(c => ({ value: c.id, label: c.name }))]}
             />
           </div>
 

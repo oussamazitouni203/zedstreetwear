@@ -60,6 +60,7 @@ export function mapProduct(p) {
     color: p.color ?? '',
     stock: p.stock,
     tag: p.tag ?? '',
+    shippingClassId: p.shippingClassId ?? '',
     attributes: Array.isArray(p.attributes) ? p.attributes : [],
     additionalInfo: Array.isArray(p.additionalInfo) ? p.additionalInfo : [],
     variations: (p.variations ?? []).map(v => ({
@@ -82,6 +83,9 @@ export function mapOrder(o) {
     date: fmtDate(o.createdAt),
     createdAt: new Date(o.createdAt).toISOString(), // raw timestamp for analytics
     total: o.total,
+    shippingRegion: o.shippingRegion ?? '',
+    shippingMethod: o.shippingMethod ?? '',
+    shippingCost: o.shippingCost ?? null,
     status: uiStatus(o.status),
     state: o.state, // CURRENT | ARCHIVED | TRASHED
     items: (o.items ?? []).map(i => ({
@@ -154,6 +158,51 @@ export function mapCoupon(c) {
     expiresAt: asDay(c.expiresAt),
     active: c.active,
     status: couponStatus(c)
+  };
+}
+
+const METHOD_LABELS = {
+  FLAT_RATE: 'Flat rate',
+  FREE_SHIPPING: 'Free shipping',
+  LOCAL_PICKUP: 'Local pickup'
+};
+
+export const shippingMethodLabel = t => METHOD_LABELS[t] ?? t;
+
+export function mapShippingMethod(m) {
+  return {
+    id: m.id,
+    zoneId: m.zoneId,
+    type: m.type,
+    title: m.title || METHOD_LABELS[m.type] || 'Shipping',
+    enabled: m.enabled,
+    cost: m.cost ?? 0,
+    minAmount: m.minAmount ?? null,
+    requiresCoupon: !!m.requiresCoupon,
+    classCosts: m.classCosts && typeof m.classCosts === 'object' ? m.classCosts : {},
+    order: m.order ?? 0
+  };
+}
+
+export function mapShippingZone(z) {
+  const methods = (z.methods ?? []).map(mapShippingMethod).sort((a, b) => a.order - b.order);
+  return {
+    id: z.id,
+    name: z.name,
+    regions: z.regions ?? [],
+    isDefault: !!z.isDefault,
+    order: z.order ?? 0,
+    methods
+  };
+}
+
+export function mapShippingClass(c) {
+  return {
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    description: c.description ?? '',
+    productCount: c._count?.products ?? 0
   };
 }
 

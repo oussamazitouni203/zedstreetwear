@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 const SECTIONS = [
   'products', 'categories', 'attributes', 'bundles',
-  'orders', 'returns', 'coupons', 'analytics', 'banners', 'users', 'settings'
+  'orders', 'returns', 'coupons', 'shipping', 'analytics', 'banners', 'users', 'settings'
 ];
 
 export default async function AdminPage({ searchParams }) {

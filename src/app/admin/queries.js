@@ -1,5 +1,5 @@
 import { prisma } from '../../lib/prisma.js';
-import { mapProduct, mapOrder, mapBundle, mapUser, mapCategory, mapAttribute, mapCoupon } from './_map.js';
+import { mapProduct, mapOrder, mapBundle, mapUser, mapCategory, mapAttribute, mapCoupon, mapShippingZone, mapShippingClass } from './_map.js';
 
 // Data for the user (admin account) add/edit page.
 export async function getUserFormData(id) {
@@ -36,9 +36,10 @@ const categoryListArgs = {
 // Data for the product add/edit page: category options + (for edit) the product.
 // `slug` identifies the product being edited (null when adding).
 export async function getAdminFormData(slug) {
-  const [categories, attributes, product, pendingCount] = await Promise.all([
+  const [categories, attributes, shippingClasses, product, pendingCount] = await Promise.all([
     prisma.category.findMany(categoryListArgs),
     prisma.attribute.findMany({ orderBy: { name: 'asc' } }),
+    prisma.shippingClass.findMany({ orderBy: { name: 'asc' } }),
     slug
       ? prisma.product.findUnique({
           where: { slug },
@@ -50,6 +51,7 @@ export async function getAdminFormData(slug) {
   return {
     categories: categories.map(mapCategory),
     attributes: attributes.map(mapAttribute),
+    shippingClasses: shippingClasses.map(mapShippingClass),
     product: product ? mapProduct(product) : null,
     pendingCount
   };
@@ -97,7 +99,7 @@ export async function listOrders() {
 }
 
 export async function getAdminData() {
-  const [products, orders, bundles, users, categories, attributes, coupons, setting] = await Promise.all([
+  const [products, orders, bundles, users, categories, attributes, coupons, shippingZones, shippingClasses, setting] = await Promise.all([
     prisma.product.findMany({ include: { categories: true }, orderBy: { createdAt: 'asc' } }),
     prisma.order.findMany({ include: { user: true, items: true }, orderBy: { seq: 'desc' } }),
     prisma.bundle.findMany({
@@ -108,6 +110,8 @@ export async function getAdminData() {
     prisma.category.findMany(categoryListArgs),
     prisma.attribute.findMany({ orderBy: { name: 'asc' } }),
     prisma.coupon.findMany({ orderBy: { createdAt: 'desc' } }),
+    prisma.shippingZone.findMany({ include: { methods: true }, orderBy: { order: 'asc' } }),
+    prisma.shippingClass.findMany({ include: { _count: { select: { products: true } } }, orderBy: { name: 'asc' } }),
     prisma.setting.findUnique({ where: { id: 'store' } })
   ]);
 
@@ -119,6 +123,8 @@ export async function getAdminData() {
     categories: categories.map(mapCategory),
     attributes: attributes.map(mapAttribute),
     coupons: coupons.map(mapCoupon),
+    shippingZones: shippingZones.map(mapShippingZone),
+    shippingClasses: shippingClasses.map(mapShippingClass),
     settings: setting?.data && typeof setting.data === 'object' ? setting.data : {}
   };
 }

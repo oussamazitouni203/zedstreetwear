@@ -30,6 +30,13 @@ export default function OrderModal({ order, busy, onClose, onSetStatus, onSetSta
           <div><span className="k">Customer</span><span className="v">{order.customer}</span></div>
           {order.email && <div><span className="k">Email</span><span className="v">{order.email}</span></div>}
           <div><span className="k">Date</span><span className="v">{order.date}</span></div>
+          {order.shippingRegion && <div><span className="k">Ships to</span><span className="v">{order.shippingRegion}</span></div>}
+          {order.shippingMethod && (
+            <div>
+              <span className="k">Shipping</span>
+              <span className="v">{order.shippingMethod}{order.shippingCost != null ? ` — ${order.shippingCost === 0 ? 'Free' : money(order.shippingCost)}` : ''}</span>
+            </div>
+          )}
           <div>
             <span className="k">Status</span>
             <span className="v"><StatusPill status={order.status} /></span>

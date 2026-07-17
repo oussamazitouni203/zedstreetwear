@@ -15,12 +15,12 @@ export default async function EditProductPage({ params }) {
     redirect(`/login?next=/admin/products/${slug}/edit`);
   }
 
-  const { categories, attributes, product, pendingCount } = await getAdminFormData(slug);
+  const { categories, attributes, shippingClasses, product, pendingCount } = await getAdminFormData(slug);
   if (!product) notFound();
 
   return (
     <AdminShell adminName={session.name} pendingCount={pendingCount} active="products" title="Edit product">
-      <ProductForm product={product} categories={categories} globalAttributes={attributes} />
+      <ProductForm product={product} categories={categories} globalAttributes={attributes} shippingClasses={shippingClasses} />
     </AdminShell>
   );
 }

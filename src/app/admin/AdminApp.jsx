@@ -14,8 +14,10 @@ import Users from './components/Users.jsx';
 import Categories from './components/Categories.jsx';
 import Attributes from './components/Attributes.jsx';
 import Coupons from './components/Coupons.jsx';
+import Shipping from './components/Shipping.jsx';
 import Analytics from './components/Analytics.jsx';
 import Settings from './components/Settings.jsx';
+import { WILAYAS } from '../../lib/regions.js';
 import ReturnOrders from './components/ReturnOrders.jsx';
 import OrderModal from './components/OrderModal.jsx';
 import ConfirmDialog from './components/ConfirmDialog.jsx';
@@ -30,6 +32,7 @@ const TITLES = {
   orders: 'Orders',
   returns: 'Return Orders',
   coupons: 'Coupons',
+  shipping: 'Shipping',
   analytics: 'Analytics',
   banners: 'Banners',
   users: 'Users',
@@ -527,6 +530,14 @@ export default function AdminApp({ initial, adminName, adminEmail, adminId, init
               onDelete={askDeleteCoupon}
               onBulkDelete={bulkDeleteCoupons}
               onBulkActive={bulkActiveCoupons}
+            />
+          )}
+          {view === 'shipping' && (
+            <Shipping
+              zones={initial.shippingZones || []}
+              classes={initial.shippingClasses || []}
+              wilayas={WILAYAS}
+              showToast={showToast}
             />
           )}
           {view === 'users' && (
