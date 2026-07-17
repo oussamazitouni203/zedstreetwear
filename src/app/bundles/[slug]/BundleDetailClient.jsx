@@ -5,7 +5,7 @@ import ImageBox from '../../../components/ImageBox.jsx';
 import { useStore } from '../../../components/StoreProvider.jsx';
 
 export default function BundleDetailClient({ bundle }) {
-  const { addItem } = useStore();
+  const { addItem, money } = useStore();
 
   // Add every product in the bundle to the cart at its discounted unit price,
   // so the cart total reflects the bundle price.
@@ -37,10 +37,10 @@ export default function BundleDetailClient({ bundle }) {
           <h1 className="pdp__title">{bundle.name}</h1>
 
           <div className="bundle-pdp__pricing">
-            <span className="pdp__price">${bundle.price}</span>
-            {bundle.save > 0 && <span className="bundle-pdp__was">${bundle.base}</span>}
+            <span className="pdp__price">{money(bundle.price)}</span>
+            {bundle.save > 0 && <span className="bundle-pdp__was">{money(bundle.base)}</span>}
             {bundle.save > 0 && (
-              <span className="bundle-pdp__save">Save {bundle.discount}% · ${bundle.save}</span>
+              <span className="bundle-pdp__save">Save {bundle.discount}% · {money(bundle.save)}</span>
             )}
           </div>
 
@@ -51,7 +51,7 @@ export default function BundleDetailClient({ bundle }) {
 
           <div className="pdp__actions">
             <button className="btn btn--black pdp__add" onClick={addBundle} disabled={bundle.products.length === 0}>
-              Add bundle to cart — ${bundle.price}
+              Add bundle to cart — {money(bundle.price)}
             </button>
           </div>
 
@@ -64,7 +64,7 @@ export default function BundleDetailClient({ bundle }) {
                     <ImageBox src={p.image} alt={p.name} label={`product — ${p.name}`} />
                   </div>
                   <p className="related-card__name">{p.name}</p>
-                  <p className="related-card__price">${p.price}</p>
+                  <p className="related-card__price">{money(p.price)}</p>
                 </Link>
               ))}
             </div>

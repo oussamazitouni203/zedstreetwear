@@ -1,11 +1,12 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { formatMoney } from '../lib/currency.js';
 
 const StoreContext = createContext(null);
 const STORAGE_KEY = 'zed-cart';
 
-export function StoreProvider({ children }) {
+export function StoreProvider({ children, currency = 'USD' }) {
   const [items, setItems] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -63,11 +64,16 @@ export function StoreProvider({ children }) {
   const count = items.reduce((n, i) => n + i.qty, 0);
   const subtotal = items.reduce((sum, i) => sum + i.price * i.qty, 0);
 
+  // Currency-aware price formatter, shared by every storefront client component.
+  const money = useCallback(n => formatMoney(n, currency), [currency]);
+
   const value = useMemo(
     () => ({
       items,
       count,
       subtotal,
+      currency,
+      money,
       cartOpen,
       searchOpen,
       setCartOpen,
@@ -77,7 +83,7 @@ export function StoreProvider({ children }) {
       removeItem,
       clearCart
     }),
-    [items, count, subtotal, cartOpen, searchOpen, addItem, changeQty, removeItem, clearCart]
+    [items, count, subtotal, currency, money, cartOpen, searchOpen, addItem, changeQty, removeItem, clearCart]
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

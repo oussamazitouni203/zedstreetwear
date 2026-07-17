@@ -84,7 +84,7 @@ export default function ContactPage() {
         <div className="contact-faq">
           <details>
             <summary>Where do you ship?</summary>
-            <p>We ship worldwide. Free shipping on orders over $150.</p>
+            <p>We ship worldwide. Free shipping on qualifying orders.</p>
           </details>
           <details>
             <summary>How long does delivery take?</summary>

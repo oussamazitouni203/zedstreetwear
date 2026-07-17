@@ -3,7 +3,9 @@ import BestSellers from '../components/BestSellers.jsx';
 import Categories from '../components/Categories.jsx';
 import FeaturedDrop from '../components/FeaturedDrop.jsx';
 import InstagramFeed from '../components/InstagramFeed.jsx';
-import { getHomeData } from '../lib/storefront.js';
+import { getHomeData, getStoreSettings } from '../lib/storefront.js';
+import { mergeContent, resolveDropTarget } from '../lib/content.js';
+import { resolveCurrency } from '../lib/currency.js';
 import {
   Marquee,
   NewArrivals,
@@ -15,18 +17,22 @@ import {
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  const { bestSellers, arrivals, categories, bundles } = await getHomeData();
+  const settings = await getStoreSettings();
+  const currency = resolveCurrency(settings);
+  const { bestSellers, arrivals, categories, bundles } = await getHomeData(currency);
+  const content = mergeContent(settings);
+  const dropTarget = resolveDropTarget(content.drop);
 
   return (
     <>
-      <Hero />
-      <Marquee />
+      <Hero hero={content.hero} />
+      <Marquee announcement={content.announcement} />
       <BestSellers items={bestSellers} />
       <Categories categories={categories} />
-      <FeaturedDrop />
+      <FeaturedDrop drop={content.drop} target={dropTarget} />
       <NewArrivals arrivals={arrivals} />
       <Bundles bundles={bundles} />
-      <Promo />
+      <Promo promo={content.promo} />
       <InstagramFeed />
       <UspBar />
     </>

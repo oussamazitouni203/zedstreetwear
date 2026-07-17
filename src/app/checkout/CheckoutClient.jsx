@@ -66,7 +66,7 @@ function StateDropdown({ value, onChange, options, invalid }) {
 }
 
 export default function CheckoutClient() {
-  const { items, count, subtotal, clearCart } = useStore();
+  const { items, count, subtotal, money, clearCart } = useStore();
   const [order, setOrder] = useState(null);
   const [name, setName] = useState('');
   const [state, setState] = useState('');
@@ -155,7 +155,7 @@ export default function CheckoutClient() {
           <p className="checkout__confirm-text">
             Your order <strong>{order.number}</strong> is in. A confirmation is on its way to your inbox.
           </p>
-          <p className="checkout__confirm-total">Total charged — ${order.total}</p>
+          <p className="checkout__confirm-total">Total charged — {money(order.total)}</p>
           <Link href="/shop" className="btn btn--black">Continue shopping</Link>
         </div>
       </main>
@@ -247,7 +247,7 @@ export default function CheckoutClient() {
                         onChange={() => setShipMethodId(o.id)}
                       />
                       <span className="checkout__ship-method__title">{o.title}</span>
-                      <span className="checkout__ship-method__cost">{o.cost === 0 ? 'Free' : `$${o.cost}`}</span>
+                      <span className="checkout__ship-method__cost">{o.cost === 0 ? 'Free' : money(o.cost)}</span>
                     </label>
                   ))}
                 </div>
@@ -271,7 +271,7 @@ export default function CheckoutClient() {
                   <p className="checkout-item__meta">{item.size === 'OS' ? 'One size' : `Size ${item.size}`}</p>
                   <p className="checkout-item__qty">Qty: {item.qty}</p>
                 </div>
-                <p className="checkout-item__price">${item.price * item.qty}</p>
+                <p className="checkout-item__price">{money(item.price * item.qty)}</p>
               </div>
             ))}
           </div>
@@ -279,15 +279,15 @@ export default function CheckoutClient() {
           <div className="checkout__totals">
             <div className="checkout__line">
               <span>Subtotal ({count} {count === 1 ? 'item' : 'items'})</span>
-              <span>${subtotal}</span>
+              <span>{money(subtotal)}</span>
             </div>
             <div className="checkout__line">
               <span>Shipping</span>
-              <span>{shipping == null ? '—' : shipping === 0 ? 'Free' : `$${shipping}`}</span>
+              <span>{shipping == null ? '—' : shipping === 0 ? 'Free' : money(shipping)}</span>
             </div>
             <div className="checkout__line checkout__line--total">
               <span>Total</span>
-              <span>${shipping == null ? subtotal : total}</span>
+              <span>{money(shipping == null ? subtotal : total)}</span>
             </div>
           </div>
 

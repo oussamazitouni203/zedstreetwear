@@ -2,6 +2,7 @@
 // shaped the way the existing storefront components expect it.
 import { prisma } from './prisma.js';
 import { unstable_cache } from 'next/cache';
+import { formatMoney } from './currency.js';
 
 // Material / fit copy keyed by category slug (used on the product page).
 const MATERIAL = {
@@ -19,7 +20,7 @@ const FIT = {
   accessories: 'One size, fits most'
 };
 
-const money = n => '$' + Math.round(n).toLocaleString();
+const money = (n, currency = 'USD') => formatMoney(n, currency);
 
 // Prisma product (with `categories` included) -> storefront card shape.
 function toCard(p) {
@@ -179,7 +180,7 @@ export async function getProductIds() {
 // ---------- Home page ----------
 
 export const getHomeData = unstable_cache(
-  async () => {
+  async (currency = 'USD') => {
   const [bestSellersRaw, arrivalsRaw, allCategories, bundlesRaw] = await Promise.all([
     prisma.product.findMany({
       where: { tag: 'Best seller' },
@@ -204,12 +205,12 @@ export const getHomeData = unstable_cache(
 
   const bestSellers = bestSellersRaw.map(p => {
     const c = toCard(p);
-    return { id: c.id, slug: c.slug, name: c.name, category: c.categoryName, price: money(c.price), tag: c.tag, image: c.image };
+    return { id: c.id, slug: c.slug, name: c.name, category: c.categoryName, price: money(c.price, currency), tag: c.tag, image: c.image };
   });
 
   const arrivals = arrivalsRaw.map(p => {
     const c = toCard(p);
-    return { id: c.id, slug: c.slug, name: c.name, price: money(c.price), image: c.image };
+    return { id: c.id, slug: c.slug, name: c.name, price: money(c.price, currency), image: c.image };
   });
 
   const bundles = bundlesRaw.map(b => {
@@ -221,8 +222,8 @@ export const getHomeData = unstable_cache(
       slug: b.slug,
       name: b.name,
       items: products.map(p => p.name).join(' + ') || '—',
-      price: money(price),
-      was: money(base),
+      price: money(price, currency),
+      was: money(base, currency),
       save: `Save ${b.discount}%`,
       image: b.image || null
     };

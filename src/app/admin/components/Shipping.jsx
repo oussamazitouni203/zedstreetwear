@@ -226,6 +226,14 @@ export default function Shipping({ zones: initialZones = [], classes: initialCla
   const [methodModal, setMethodModal] = useState(null); // { zoneId, method }
   const [classModal, setClassModal] = useState(null); // { cls } | { cls: null }
   const [confirm, setConfirm] = useState(null);
+  const [openZones, setOpenZones] = useState(() => new Set()); // collapsed by default
+
+  const toggleZone = id =>
+    setOpenZones(s => {
+      const n = new Set(s);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
 
   const hasDefault = zones.some(z => z.isDefault);
 
@@ -324,26 +332,42 @@ export default function Shipping({ zones: initialZones = [], classes: initialCla
       {zones.length === 0 ? (
         <div className="adm-card"><div className="adm-empty">No shipping zones yet. Add a zone to start charging shipping.</div></div>
       ) : (
-        zones.map(zone => (
-          <div key={zone.id} className="adm-card ship-zone">
+        zones.map(zone => {
+          const open = openZones.has(zone.id);
+          const count = zone.methods.length;
+          return (
+          <div key={zone.id} className={`adm-card ship-zone${open ? ' open' : ''}`}>
             <div className="ship-zone__head">
-              <div className="ship-zone__title">
-                <h3>{zone.name}</h3>
-                {zone.isDefault ? (
-                  <span className="ship-tag">Fallback</span>
-                ) : (
-                  <span className="ship-zone__regions">
-                    {zone.regions.length === 0 ? 'No regions' : zone.regions.slice(0, 4).join(', ')}
-                    {zone.regions.length > 4 ? ` +${zone.regions.length - 4} more` : ''}
-                  </span>
-                )}
-              </div>
+              <button
+                type="button"
+                className="ship-zone__toggle"
+                aria-expanded={open}
+                onClick={() => toggleZone(zone.id)}
+              >
+                <svg className="ship-zone__caret" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 6 15 12 9 18" /></svg>
+                <span className="ship-zone__title">
+                  <span className="ship-zone__name">{zone.name}</span>
+                  {zone.isDefault ? (
+                    <span className="ship-tag">Fallback</span>
+                  ) : (
+                    <span className="ship-zone__regions">
+                      {zone.regions.length === 0 ? 'No regions' : zone.regions.slice(0, 4).join(', ')}
+                      {zone.regions.length > 4 ? ` +${zone.regions.length - 4} more` : ''}
+                    </span>
+                  )}
+                </span>
+                <span className={`ship-zone__count${count === 0 ? ' ship-zone__count--warn' : ''}`}>
+                  {count} {count === 1 ? 'method' : 'methods'}
+                </span>
+              </button>
               <div className="ship-zone__actions">
                 <button className="adm-btn--small" onClick={() => setZoneModal({ zone })}>Edit</button>
                 <button className="delete-btn" onClick={() => removeZone(zone)} aria-label="Delete zone">✕</button>
               </div>
             </div>
 
+            <div className={`ship-methods-collapse${open ? ' open' : ''}`}>
+            <div className="ship-methods-collapse__inner">
             <div className="ship-methods">
               {zone.methods.length === 0 ? (
                 <p className="ship-methods__empty">No methods yet — customers in this zone can’t check out until you add one.</p>
@@ -370,8 +394,11 @@ export default function Shipping({ zones: initialZones = [], classes: initialCla
                 + Add shipping method
               </button>
             </div>
+            </div>
+            </div>
           </div>
-        ))
+          );
+        })
       )}
 
       {/* Shipping classes */}

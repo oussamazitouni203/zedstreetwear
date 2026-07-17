@@ -6,7 +6,7 @@ import ImageBox from '../../../components/ImageBox.jsx';
 import { useStore } from '../../../components/StoreProvider.jsx';
 
 export default function ProductDetailClient({ product, related }) {
-  const { addItem } = useStore();
+  const { addItem, money } = useStore();
   const [size, setSize] = useState(product.sizes[0]);
   const [qty, setQty] = useState(1);
   const [active, setActive] = useState(0);
@@ -100,7 +100,7 @@ export default function ProductDetailClient({ product, related }) {
           <p className="pdp__category">{categoryName}</p>
           <h1 className="pdp__title">{product.name}</h1>
           <p className="pdp__price">
-            {isVariable && !chosen ? `From $${product.fromPrice}` : `$${displayPrice}`}
+            {isVariable && !chosen ? `From ${money(product.fromPrice)}` : money(displayPrice)}
           </p>
           {product.summary && <p className="pdp__blurb">{product.summary}</p>}
 
@@ -163,7 +163,7 @@ export default function ProductDetailClient({ product, related }) {
                 ? 'Select options'
                 : isVariable && !chosen.inStock
                 ? 'Out of stock'
-                : `Add to cart — $${displayPrice * qty}`}
+                : `Add to cart — ${money(displayPrice * qty)}`}
             </button>
           </div>
 
@@ -207,7 +207,7 @@ export default function ProductDetailClient({ product, related }) {
                   <ImageBox src={p.image} alt={p.name} label={`product — ${p.name}`} />
                 </div>
                 <p className="related-card__name">{p.name}</p>
-                <p className="related-card__price">${p.price}</p>
+                <p className="related-card__price">{money(p.price)}</p>
               </Link>
             ))}
           </div>

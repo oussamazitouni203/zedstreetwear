@@ -1,10 +1,15 @@
 import Link from 'next/link';
 import { reviews } from '../data.js';
+import { CONTENT_DEFAULTS } from '../lib/content.js';
 import ImageBox from './ImageBox.jsx';
 
-export function Marquee() {
-  const line =
-    'New drop live\u00A0\u00A0•\u00A0\u00A0Free shipping over $100\u00A0\u00A0•\u00A0\u00A0Limited runs — no restocks\u00A0\u00A0•\u00A0\u00A0The Bespoke SS26\u00A0\u00A0•\u00A0\u00A0';
+const SEP = '  •  ';
+
+export function Marquee({ announcement = CONTENT_DEFAULTS.announcement }) {
+  const a = { ...CONTENT_DEFAULTS.announcement, ...(announcement || {}) };
+  const messages = (Array.isArray(a.messages) ? a.messages : []).filter(Boolean);
+  if (a.enabled === false || messages.length === 0) return null;
+  const line = messages.join(SEP) + SEP;
   return (
     <div className="marquee">
       <div className="marquee__track">
@@ -86,14 +91,15 @@ export function Bundles({ bundles = [] }) {
   );
 }
 
-export function Promo() {
+export function Promo({ promo = CONTENT_DEFAULTS.promo }) {
+  const p = { ...CONTENT_DEFAULTS.promo, ...(promo || {}) };
   return (
     <section className="promo">
-      <p className="eyebrow">First order?</p>
+      {p.eyebrow && <p className="eyebrow">{p.eyebrow}</p>}
       <h2>
-        Take 15% off with code <span className="code">ZED15</span>
+        {p.heading} {p.code && <span className="code">{p.code}</span>}
       </h2>
-      <Link href="/shop" className="btn btn--white">Shop now</Link>
+      {p.label && <Link href={p.href || '/shop'} className="btn btn--white">{p.label}</Link>}
     </section>
   );
 }
@@ -104,8 +110,8 @@ export function Reviews() {
       <div className="container reviews__grid">
         {reviews.map(r => (
           <figure key={r.id} className="review">
-            <p className="stars">★★★★★</p>
-            <blockquote>“{r.quote}”</blockquote>
+            <p className="stars">{'★★★★★'}</p>
+            <blockquote>{'“'}{r.quote}{'”'}</blockquote>
             <figcaption>{r.author}</figcaption>
           </figure>
         ))}
@@ -116,7 +122,7 @@ export function Reviews() {
 
 export function UspBar() {
   const items = [
-    { title: 'Free shipping', sub: 'On all orders over $100' },
+    { title: 'Free shipping', sub: 'On all qualifying orders' },
     { title: '30-day returns', sub: 'Unworn, no questions asked' },
     { title: 'Secure checkout', sub: 'All major cards accepted' }
   ];

@@ -34,7 +34,7 @@ const NAV = [
     type: 'group',
     label: 'Content',
     icon: 'content',
-    items: [{ key: 'banners', label: 'Banners' }]
+    items: [{ key: 'banners', label: 'Homepage' }]
   },
   { type: 'item', key: 'users', label: 'Users', icon: 'users' },
   { type: 'item', key: 'settings', label: 'Settings', icon: 'settings' }

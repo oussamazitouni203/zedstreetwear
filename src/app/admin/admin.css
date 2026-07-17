@@ -437,6 +437,7 @@
 .dp { position: relative; }
 .dp__field {
   width: 100%; text-align: left; cursor: pointer; font-family: inherit;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   border: 1px solid #ddd; background: #fff; color: #111; padding: 12px 44px 12px 14px; font-size: 14px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23111' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3Cline x1='3' y1='10' x2='21' y2='10'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 15px center; background-size: 16px;
@@ -819,6 +820,46 @@
   .bulk-bar__actions { flex-basis: 100%; }
 }
 
+/* ============ Dashboard — phone ============ */
+@media (max-width: 560px) {
+  .adm-stats { grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 22px; }
+  .adm-stat { padding: 16px 14px; min-width: 0; }
+  .adm-stat .label { margin-bottom: 10px; letter-spacing: 0.14em; }
+  .adm-stat .value { font-size: 24px; }
+  .adm-stat .delta { margin-top: 8px; font-size: 11px; }
+
+  /* Shortcuts become compact tiles: icon over label, count badge in the corner. */
+  .adm-shortcuts { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 22px; }
+  .adm-shortcut { position: relative; min-width: 0; flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px; }
+  .adm-shortcut__icon { width: 34px; height: 34px; }
+  .adm-shortcut__body { width: 100%; }
+  .adm-shortcut__count { position: absolute; top: 12px; right: 12px; }
+
+  /* Dashboard cards reflow to fit the screen — no sideways scroll on a summary. */
+  .adm-dash-grid { gap: 14px; }
+  .adm-dash-grid .adm-card { overflow-x: visible; }
+  .adm-card__head { padding: 16px; }
+  .adm-dash-empty { padding: 22px 16px; }
+
+  .order-row {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "customer total"
+      "id status";
+    row-gap: 5px; column-gap: 10px; padding: 12px 16px;
+  }
+  .order-row .customer { grid-area: customer; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .order-row .total { grid-area: total; justify-self: end; }
+  .order-row .id { grid-area: id; align-self: center; }
+  .order-row .pill { grid-area: status; justify-self: end; }
+
+  .top-product { padding: 12px 16px; gap: 10px; }
+  .top-product > div:first-child { min-width: 0; }
+  .top-product .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .top-product__right { flex-shrink: 0; gap: 10px; }
+  .top-product__bar { width: 44px; }
+}
+
 /* ============ Analytics ============ */
 .an { display: flex; flex-direction: column; gap: 20px; }
 
@@ -843,6 +884,8 @@
 .an-chip.active { background: #111; border-color: #111; color: #fff; }
 .an-filter__custom { display: flex; align-items: center; gap: 10px; max-width: 460px; }
 .an-filter__custom .dp { flex: 1; }
+/* On the analytics filter the picker sits near the top, so open it downward. */
+.an-filter__custom .dp__pop { top: calc(100% + 8px); bottom: auto; }
 .an-filter__dash { color: #999; }
 
 .an-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
@@ -1001,6 +1044,59 @@
   .set__panel { padding: 20px; }
 }
 
+/* ============ content (homepage) ============ */
+.cnt { display: flex; flex-direction: column; gap: 20px; max-width: 860px; }
+.cnt-card { padding: 22px 24px; }
+.cnt-card__head { margin-bottom: 18px; }
+.cnt-card__head h3 { font-size: 15px; font-weight: 600; }
+.cnt-card__head p { font-size: 12px; color: #999; margin-top: 3px; }
+
+.cnt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.cnt-field { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.cnt-field--full { grid-column: 1 / -1; }
+.cnt-field > span { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #999; }
+.cnt-help { font-size: 12px; color: #aaa; margin-top: -1px; }
+.cnt-field input, .cnt-field textarea {
+  width: 100%; box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px;
+  padding: 10px 12px; font-size: 14px; font-family: inherit; color: #111; background: #fff; outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.cnt-field input:focus, .cnt-field textarea:focus { border-color: #111; box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.06); }
+.cnt-field textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
+.cnt-field input::placeholder, .cnt-field textarea::placeholder { color: #b3b3b3; }
+
+.cnt-toggle { margin-bottom: 16px; }
+
+.cnt-msgs { display: flex; flex-direction: column; gap: 8px; }
+.cnt-msg { display: flex; align-items: center; gap: 8px; }
+.cnt-msg input {
+  flex: 1; min-width: 0; box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px;
+  padding: 10px 12px; font-size: 14px; font-family: inherit; color: #111; background: #fff; outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.cnt-msg input:focus { border-color: #111; box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.06); }
+.cnt-add {
+  align-self: flex-start; margin-top: 12px; border: 1px dashed #ccc; background: #fff; color: #555;
+  border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+}
+.cnt-add:hover { border-color: #111; color: #111; }
+
+.cnt-foot { display: flex; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid #f0f0f0; }
+
+/* Countdown target: shared DatePicker + a time field, rounded to match. */
+.cnt-datetime { display: flex; gap: 10px; align-items: stretch; }
+.cnt-datetime .dp { flex: 1; min-width: 0; }
+.cnt-datetime .dp__field { border-radius: 8px; }
+.cnt-time {
+  flex: 0 0 132px; width: 132px; min-width: 0; box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px;
+  padding: 12px; font-size: 14px; font-family: inherit; color: #111; background: #fff; outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.cnt-time:hover { border-color: #111; }
+.cnt-time:focus { border-color: #111; box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.06); }
+
+@media (max-width: 560px) { .cnt-grid { grid-template-columns: 1fr; } }
+
 /* ============ shipping ============ */
 .ship-sub { font-size: 12px; color: #999; margin-top: 3px; }
 .ship-classes-head { margin-top: 40px; }
@@ -1010,14 +1106,36 @@
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding: 16px 20px; border-bottom: 1px solid #f0f0f0;
 }
+.ship-zone__toggle {
+  display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;
+  background: none; border: none; padding: 0; margin: 0; cursor: pointer;
+  text-align: left; font: inherit; color: inherit;
+}
+.ship-zone__caret { color: #aaa; flex: 0 0 auto; transition: transform 0.2s ease; }
+.ship-zone__toggle[aria-expanded="true"] .ship-zone__caret { transform: rotate(90deg); color: #111; }
 .ship-zone__title { display: flex; align-items: center; gap: 12px; min-width: 0; flex-wrap: wrap; }
-.ship-zone__title h3 { font-size: 15px; font-weight: 600; }
+.ship-zone__title h3, .ship-zone__name { font-size: 15px; font-weight: 600; }
 .ship-zone__regions { font-size: 12px; color: #999; }
+.ship-zone__count {
+  flex: 0 0 auto; margin-left: auto; font-size: 11px; letter-spacing: 0.04em;
+  color: #777; background: #f2f2f2; border: 1px solid transparent; border-radius: 999px; padding: 3px 10px;
+}
+.ship-zone__count--warn { color: #b26a00; background: #fff7e6; border-color: #f0dcae; }
 .ship-tag {
   font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600;
   color: #274bb5; background: #e9f0ff; border: 1px solid #ccd9f7; border-radius: 999px; padding: 3px 9px;
 }
 .ship-zone__actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+
+/* Smooth open/close: animate the grid row from 0fr to 1fr (no fixed height). */
+.ship-methods-collapse {
+  display: grid; grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease;
+}
+.ship-methods-collapse.open { grid-template-rows: 1fr; }
+/* The clipping wrapper must be padding-free, or its padding stays visible when
+   the row collapses to 0 — the actual padding lives on .ship-methods inside. */
+.ship-methods-collapse__inner { overflow: hidden; min-height: 0; }
 
 .ship-methods { padding: 8px 20px 16px; }
 .ship-methods__empty { font-size: 13px; color: #b26a00; background: #fff7e6; border: 1px solid #f0dcae; border-radius: 8px; padding: 10px 12px; margin: 8px 0; }
@@ -1070,6 +1188,29 @@
 .ship-modal__body { padding: 20px 22px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
 .ship-modal__foot { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 22px; border-top: 1px solid #eee; }
 
+/* Text / number / textarea fields inside shipping modals — match the rounded
+   modal aesthetic (the admin's flat .adm-form inputs don't reach here). */
+.ship-modal__body input:not([type]),
+.ship-modal__body input[type="text"],
+.ship-modal__body input[type="number"],
+.ship-modal__body textarea,
+.ship-modal__body select {
+  width: 100%; box-sizing: border-box;
+  border: 1px solid #ddd; border-radius: 8px;
+  padding: 11px 13px; font-size: 14px; font-family: inherit; color: #111;
+  background: #fff; outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+}
+.ship-modal__body input:not([type]):focus,
+.ship-modal__body input[type="text"]:focus,
+.ship-modal__body input[type="number"]:focus,
+.ship-modal__body textarea:focus,
+.ship-modal__body select:focus {
+  border-color: #111; box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.07);
+}
+.ship-modal__body input::placeholder,
+.ship-modal__body textarea::placeholder { color: #b3b3b3; }
+.ship-modal__body textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
+
 .ship-seg { display: flex; gap: 8px; }
 .ship-seg__opt {
   flex: 1; border: 1px solid #ddd; background: #fff; cursor: pointer; padding: 10px; border-radius: 8px;
@@ -1089,4 +1230,4 @@
 
 .ship-classcost { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; }
 .ship-classcost span { font-size: 13px; color: #333; }
-.ship-classcost input { width: 120px; }
+.ship-modal__body .ship-classcost input { width: 120px; flex: 0 0 auto; }

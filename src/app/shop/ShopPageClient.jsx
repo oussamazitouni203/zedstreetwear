@@ -23,10 +23,14 @@ const COLORS = [
 ];
 
 const PRICES = [
-  { id: 'under-50', label: 'Under $50', test: p => p.price < 50 },
-  { id: '50-100', label: '$50 – $100', test: p => p.price >= 50 && p.price <= 100 },
-  { id: 'over-100', label: 'Over $100', test: p => p.price > 100 }
+  { id: 'under-50', test: p => p.price < 50 },
+  { id: '50-100', test: p => p.price >= 50 && p.price <= 100 },
+  { id: 'over-100', test: p => p.price > 100 }
 ];
+
+// Bucket labels in the active currency (thresholds themselves are fixed values).
+const priceLabel = (id, money) =>
+  id === 'under-50' ? `Under ${money(50)}` : id === 'over-100' ? `Over ${money(100)}` : `${money(50)} – ${money(100)}`;
 
 const STATUSES = ['New', 'Best seller', 'Low stock', 'Restocked'];
 
@@ -62,7 +66,7 @@ function FilterOption({ checked, onToggle, swatch, children }) {
 export default function ShopPageClient({ products = [], categories = [] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { addItem } = useStore();
+  const { addItem, money } = useStore();
   const cat = searchParams.get('cat') || 'all';
 
   const [sort, setSort] = useState('featured');
@@ -261,7 +265,7 @@ export default function ShopPageClient({ products = [], categories = [] }) {
                 checked={filters.prices.includes(r.id)}
                 onToggle={() => toggleFilter('prices', r.id)}
               >
-                {r.label}
+                {priceLabel(r.id, money)}
               </FilterOption>
             ))}
           </div>
@@ -302,7 +306,7 @@ export default function ShopPageClient({ products = [], categories = [] }) {
                     </div>
                     <Link href={`/shop/${p.slug}`} className="shop-card__info">
                       <p className="name">{p.name}</p>
-                      <p className="price">${p.price}</p>
+                      <p className="price">{money(p.price)}</p>
                     </Link>
                   </div>
                 ))}

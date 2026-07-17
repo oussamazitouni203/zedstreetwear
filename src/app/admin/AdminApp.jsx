@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import './admin.css';
 import * as actions from './actions.js';
 import { logout } from '../login/actions.js';
@@ -16,6 +15,7 @@ import Attributes from './components/Attributes.jsx';
 import Coupons from './components/Coupons.jsx';
 import Shipping from './components/Shipping.jsx';
 import Analytics from './components/Analytics.jsx';
+import Content from './components/Content.jsx';
 import Settings from './components/Settings.jsx';
 import { WILAYAS } from '../../lib/regions.js';
 import ReturnOrders from './components/ReturnOrders.jsx';
@@ -34,15 +34,20 @@ const TITLES = {
   coupons: 'Coupons',
   shipping: 'Shipping',
   analytics: 'Analytics',
-  banners: 'Banners',
+  banners: 'Homepage',
   users: 'Users',
   settings: 'Settings'
 };
 
 // Sections not yet built — shown as scaffolds so the hierarchy is complete.
-const PLACEHOLDERS = {
-  banners: 'Homepage banners — images, headings and links you can manage without code.'
-};
+const PLACEHOLDERS = {};
+
+// Section routes the SPA can switch between client-side (URL kept in sync,
+// no server round-trip / DB refetch). Anything else falls back to 'dashboard'.
+const SECTIONS = [
+  'products', 'categories', 'attributes', 'bundles',
+  'orders', 'returns', 'coupons', 'shipping', 'analytics', 'banners', 'users', 'settings'
+];
 
 const NOTICES = {
   'product-added': 'Product has been added.',
@@ -60,8 +65,9 @@ const NOTICES = {
 };
 
 export default function AdminApp({ initial, adminName, adminEmail, adminId, initialView = 'dashboard', notice = null }) {
-  const router = useRouter();
-  const view = initialView; // each admin route renders one section
+  // The data for every section is already loaded in `initial`, so switching
+  // sections is a client-side view change — no navigation, no DB refetch.
+  const [view, setView] = useState(initialView);
   const [search, setSearch] = useState('');
   const [account, setAccount] = useState({ name: adminName, email: adminEmail });
   const [toast, setToast] = useState(null);
@@ -96,8 +102,25 @@ export default function AdminApp({ initial, adminName, adminEmail, adminId, init
   const [activeOrderId, setActiveOrderId] = useState(null);
   const [confirming, setConfirming] = useState(null); // { title, message, confirmLabel, run }
 
-  // Navigate to another section as a real route.
-  const navigate = key => router.push(key === 'dashboard' ? '/admin' : `/admin/${key}`);
+  // Switch section without a server round-trip: update the URL via the History
+  // API (so links are shareable and back/forward work) and swap the view.
+  const navigate = key => {
+    if (key === view) return;
+    const path = key === 'dashboard' ? '/admin' : `/admin/${key}`;
+    window.history.pushState(null, '', path);
+    setSearch('');
+    setView(SECTIONS.includes(key) ? key : 'dashboard');
+  };
+
+  // Keep the view in sync when the user presses browser back/forward.
+  useEffect(() => {
+    const onPop = () => {
+      const seg = window.location.pathname.replace(/^\/admin\/?/, '') || 'dashboard';
+      setView(SECTIONS.includes(seg) ? seg : 'dashboard');
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
 
   const withBusy = async fn => {
     setBusy(true);
@@ -428,7 +451,7 @@ export default function AdminApp({ initial, adminName, adminEmail, adminId, init
           {toast.message}
         </div>
       )}
-      <Sidebar view={view} pendingCount={pendingCount} adminName={account.name} />
+      <Sidebar view={view} onNavigate={navigate} pendingCount={pendingCount} adminName={account.name} />
       <main className="adm-main">
         <div className="adm-topbar">
           <h1>{TITLES[view]}</h1>
@@ -512,6 +535,9 @@ export default function AdminApp({ initial, adminName, adminEmail, adminId, init
           )}
           {view === 'analytics' && (
             <Analytics orders={orders} products={products} coupons={coupons} />
+          )}
+          {view === 'banners' && (
+            <Content settings={settings} busy={busy} onSave={saveSettings} />
           )}
           {view === 'settings' && (
             <Settings

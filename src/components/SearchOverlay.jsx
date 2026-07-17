@@ -6,7 +6,7 @@ import { useStore } from './StoreProvider.jsx';
 import ImageBox from './ImageBox.jsx';
 
 export default function SearchOverlay() {
-  const { searchOpen, setSearchOpen, addItem } = useStore();
+  const { searchOpen, setSearchOpen, addItem, money } = useStore();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const inputRef = useRef(null);
@@ -87,7 +87,7 @@ export default function SearchOverlay() {
                       </div>
                       <div className="search-result__info">
                         <p className="search-result__name">{p.name}</p>
-                        <p className="search-result__meta">{p.category} · ${p.price}</p>
+                        <p className="search-result__meta">{p.category} · {money(p.price)}</p>
                       </div>
                     </Link>
                     <button className="search-result__add" onClick={() => addItem(p, p.sizes[0])}>Add</button>

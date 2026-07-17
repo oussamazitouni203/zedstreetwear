@@ -6,7 +6,7 @@ import { useStore } from './StoreProvider.jsx';
 import ImageBox from './ImageBox.jsx';
 
 export default function CartDrawer() {
-  const { items, count, subtotal, cartOpen, setCartOpen, changeQty, removeItem } = useStore();
+  const { items, count, subtotal, money, cartOpen, setCartOpen, changeQty, removeItem } = useStore();
 
   useEffect(() => {
     if (!cartOpen) return;
@@ -51,7 +51,7 @@ export default function CartDrawer() {
                     </div>
                   </div>
                   <div className="cart-item__right">
-                    <p className="cart-item__price">${item.price * item.qty}</p>
+                    <p className="cart-item__price">{money(item.price * item.qty)}</p>
                     <button className="cart-item__remove" onClick={() => removeItem(item.key)}>Remove</button>
                   </div>
                 </div>
@@ -61,7 +61,7 @@ export default function CartDrawer() {
             <div className="cart-drawer__foot">
               <div className="cart-drawer__subtotal">
                 <span>Subtotal</span>
-                <span>${subtotal}</span>
+                <span>{money(subtotal)}</span>
               </div>
               <p className="cart-drawer__note">Shipping &amp; taxes calculated at checkout.</p>
               <Link href="/checkout" className="btn btn--black cart-drawer__checkout" onClick={() => setCartOpen(false)}>
