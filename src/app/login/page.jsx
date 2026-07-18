@@ -10,7 +10,7 @@ export default async function LoginPage({ searchParams }) {
   return (
     <div className="login">
       <div className="login__card">
-        <p className="login__brand">The Bespoke</p>
+        <img className="login__logo" src="/image/upload/logo.jpg" alt="The Bespoke" />
         <h1 className="login__title">Sign in</h1>
         <p className="login__sub">Access your account or the admin dashboard.</p>
         <LoginForm next={next} />

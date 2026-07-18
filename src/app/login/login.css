@@ -21,15 +21,25 @@
   color: #999;
   margin-bottom: 20px;
 }
+.login__logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  margin: 0 auto 22px;
+}
 .login__title {
   font-size: 24px;
   font-weight: 700;
   margin: 0 0 4px;
+  text-align: center;
 }
 .login__sub {
   color: #666;
   font-size: 14px;
   margin: 0 0 24px;
+  text-align: center;
 }
 .login__form {
   display: flex;

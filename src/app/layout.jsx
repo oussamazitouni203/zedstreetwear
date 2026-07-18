@@ -12,7 +12,8 @@ export async function generateMetadata() {
   const name = g.storeName || 'The Bespoke';
   return {
     title: { default: name, template: `%s — ${name}` },
-    description: g.tagline || 'Monochrome streetwear essentials — SS26 collection.'
+    description: g.tagline || 'Monochrome streetwear essentials — SS26 collection.',
+    icons: { icon: '/image/upload/logo.jpg', shortcut: '/image/upload/logo.jpg', apple: '/image/upload/logo.jpg' }
   };
 }
 

@@ -177,7 +177,7 @@ export default function Sidebar({ view, onNavigate, pendingCount, adminName }) {
       {/* Desktop sidebar */}
       <aside className="adm-sidebar">
         <div className="adm-sidebar__brand">
-          <p className="name">The Bespoke</p>
+          <img className="adm-brand-logo" src="/image/upload/logo.jpg" alt="The Bespoke" />
           <p className="sub">Admin</p>
         </div>
         <div className="adm-sidebar__scroll">
@@ -219,8 +219,8 @@ export default function Sidebar({ view, onNavigate, pendingCount, adminName }) {
         <div className="adm-sheet" onClick={() => setSheet(false)}>
           <div className="adm-sheet__panel" onClick={e => e.stopPropagation()}>
             <div className="adm-sheet__head">
-              <div>
-                <p className="adm-sheet__brand">The Bespoke</p>
+              <div className="adm-sheet__head-brand">
+                <img className="adm-brand-logo adm-brand-logo--sm" src="/image/upload/logo.jpg" alt="The Bespoke" />
                 <p className="adm-sheet__sub">{adminName || 'Admin'}</p>
               </div>
               <button className="adm-sheet__close" aria-label="Close menu" onClick={() => setSheet(false)}>×</button>
